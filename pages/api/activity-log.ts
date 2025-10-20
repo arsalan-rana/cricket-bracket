@@ -21,7 +21,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const data = response.data.values || [];
 
-    const activities = data.slice(0).map(row => ({
+    // Skip the header row if present
+    const activities = data.slice(1).map(row => ({
       timestamp: row[0],
       eventType: row[1],
       user: row[2],
