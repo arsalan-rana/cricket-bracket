@@ -21,17 +21,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const data = response.data.values || [];
 
-    const activities = data.slice(0).map(row => ({
-      timestamp: row[0],
-      eventType: row[1],
-      user: row[2],
-      details: row[3],
-    }));
+    // Filter out any rows that don't have all required fields
+    const activities = data
+      .filter(row => row && row.length >= 4 && row[0] && row[1] && row[2])
+      .map(row => ({
+        timestamp: row[0],
+        eventType: row[1],
+        user: row[2],
+        details: row[3] || '',
+      }));
 
-    // Optionally, you could reverse the array to show the most recent first:
+    // Return activities in reverse order (most recent first)
     res.status(200).json({ activities: activities.reverse() });
   } catch (error) {
     console.error('Error fetching activity log:', error);
-    res.status(500).json({ error: 'Error fetching activity log' });
+    // Return empty activities instead of error to prevent breaking the UI
+    res.status(200).json({ activities: [] });
   }
 }

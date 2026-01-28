@@ -23,37 +23,11 @@ import { styled } from '@mui/material/styles';
 import { DateTime } from 'luxon';
 import { SelectChangeEvent } from '@mui/material';
 
-// Mapping for team flags (using emoji)
-const teamFlags: { [key: string]: string } = {
-  'New Zealand': '🇳🇿',
-  India: '🇮🇳',
-  Bangladesh: '🇧🇩',
-  Pakistan: '🇵🇰',
-  'South Africa': '🇿🇦',
-  Australia: '🇦🇺',
-  England: '🇬🇧',
-  Afghanistan: '🇦🇫',
-  'Sri Lanka': '🇱🇰',
-  Oman: '🇴🇲',
-  UAE: '🇦🇪',
-  'Hong Kong': '🇭🇰',
-};
+// Import tournament configuration utilities
+import { teamColors, teamFlags, getAllDeadlines, getNow, getConfig, getPhaseForMatch } from '@/lib/useTournament';
 
-// Team colors for enhanced visual design
-const teamColors: { [key: string]: { primary: string; secondary: string } } = {
-  'New Zealand': { primary: '#000000', secondary: '#FFFFFF' },
-  India: { primary: '#FF9933', secondary: '#138808' },
-  Bangladesh: { primary: '#006A4E', secondary: '#F42A41' },
-  Pakistan: { primary: '#00684A', secondary: '#FFFFFF' },
-  'South Africa': { primary: '#FFD100', secondary: '#007749' },
-  Australia: { primary: '#FFD100', secondary: '#007749' },
-  England: { primary: '#012169', secondary: '#C8102E' },
-  Afghanistan: { primary: '#D32011', secondary: '#000000' },
-  'Sri Lanka': { primary: '#FFB300', secondary: '#0056B3' },
-  Oman: { primary: '#EE2737', secondary: '#009639' },
-  UAE: { primary: '#00732F', secondary: '#FF0000' },
-  'Hong Kong': { primary: '#DE2910', secondary: '#FFFFFF' },
-};
+// Admin email from environment (public for client-side)
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
 // A larger, styled Chip that includes flags
 const BigChip = styled(Chip)(({ theme }) => ({
@@ -233,14 +207,15 @@ const FixtureAccordion = ({
     .filter(([_, pick]) => pick === fixture.team2)
     .map(([player]) => player);
 
-  const getMatchTypeChip = (matchNum: string) => {
-    const match = parseInt(matchNum);
-    if (match <= 12) return { label: 'Group Stage', color: '#1B5E20' };
-    if (match <= 18) return { label: 'Super 4', color: '#FF6F00' };
-    return { label: 'Final', color: '#D32F2F' };
+  const matchNum = parseInt(fixture.match);
+  const phaseInfo = getPhaseForMatch(matchNum);
+  const matchType = phaseInfo ? {
+    label: phaseInfo.name,
+    color: phaseInfo.color
+  } : {
+    label: 'Match',
+    color: '#1B5E20'
   };
-
-  const matchType = getMatchTypeChip(fixture.match);
 
   return (
     <StyledAccordion>
@@ -361,7 +336,7 @@ const FixtureAccordion = ({
             )}
           </Grid>
         </Grid>
-        {session.user?.email === 'arsalan.rana@gmail.com' && (
+        {ADMIN_EMAIL && session.user?.email === ADMIN_EMAIL && (
           <AdminFixtureUpdate fixture={fixture} setSnackbar={setSnackbar} />
         )}
       </AccordionDetails>
@@ -469,11 +444,17 @@ const transformDataForFixtures = (data: any[][] | undefined): Fixture[] => {
 
 const Fixtures = () => {
   const { data: session, status } = useSession();
+  const config = getConfig();
   const [groupStageFixtures, setGroupStageFixtures] = useState<Fixture[]>([]);
   const [super4Fixtures, setSuper4Fixtures] = useState<Fixture[]>([]);
   const [finalsFixtures, setFinalsFixtures] = useState<Fixture[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, message: '', severity: 'success' });
+
+  // Get phase names from config
+  const groupStagePhase = config.phases.find((p) => p.id === 'group-stage');
+  const super4Phase = config.phases.find((p) => p.id === 'super4');
+  const finalsPhase = config.phases.find((p) => p.id === 'finals');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -531,10 +512,11 @@ const Fixtures = () => {
     );
   }
 
-  // Determine current Eastern time and the Super 4/playoffs start time (Sept 20th, 10:30AM ET)
-  const nowEastern = DateTime.now().setZone('America/New_York');
-  const super4Start = DateTime.fromISO('2025-09-20T10:30:00', { zone: 'America/New_York' });
-  const finalsStart = DateTime.fromISO('2025-09-28T10:30:00', { zone: 'America/New_York' });
+  // Determine current time and phase start times from config
+  const nowEastern = getNow();
+  const deadlines = getAllDeadlines();
+  const super4Start = deadlines.super4;
+  const finalsStart = deadlines.finals;
   const showSuper4 = nowEastern >= super4Start;
   const showFinals = nowEastern >= finalsStart;
 
@@ -558,7 +540,7 @@ const Fixtures = () => {
       {showFinals && finalsFixtures.length > 0 && finalsFixtures[0].team1 && finalsFixtures[0].team2 && (
         <Box sx={{ mb: 4 }}>
           <Typography variant="h5" gutterBottom>
-            Finals
+            {finalsPhase?.name || 'Finals'}
           </Typography>
           {finalsFixtures.map((fixture, index) => (
             <FixtureAccordion key={`finals-${index}`} fixture={fixture} session={session} setSnackbar={setSnackbar} />
@@ -570,7 +552,7 @@ const Fixtures = () => {
       {showSuper4 && super4Fixtures.length > 0 && (
         <Box sx={{ mb: 4 }}>
           <Typography variant="h5" gutterBottom>
-            Super 4
+            {super4Phase?.name || 'Super 4'}
           </Typography>
           {super4Fixtures.map((fixture, index) => (
             <FixtureAccordion key={`super4-${index}`} fixture={fixture} session={session} setSnackbar={setSnackbar} />
@@ -582,7 +564,7 @@ const Fixtures = () => {
       {groupStageFixtures.length > 0 && (
         <Box sx={{ mb: 4 }}>
           <Typography variant="h5" gutterBottom>
-            Group Stage
+            {groupStagePhase?.name || 'Group Stage'}
           </Typography>
           {groupStageFixtures.map((fixture, index) => (
             <FixtureAccordion key={`group-${index}`} fixture={fixture} session={session} setSnackbar={setSnackbar} />

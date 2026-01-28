@@ -30,26 +30,61 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const sheets = google.sheets({ version: 'v4', auth });
     const spreadsheetId = process.env.GOOGLE_SHEET_ID!;
 
-    // Fetch the Chips tab (columns A:C)
+    // Fetch the Chips tab (columns A:G - DoubleUp only for group & super8, Wildcard for all)
     const chipRes = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Chips!A:C',
+      range: 'Chips!A:G',
     });
     const rows = chipRes.data.values || [];
-    // Assume header is in row 1.
+
+    if (!rows || rows.length === 0) {
+      return res.status(200).json({
+        name,
+        groupStage: { doubleUp: null, wildcard: null },
+        super8: { doubleUp: null, wildcard: null },
+        semifinals: { doubleUp: null, wildcard: null },
+        finals: { doubleUp: null, wildcard: null }
+      });
+    }
+
     // Find the row matching the user name (case-insensitive)
     const userRow = rows.find((row, index) => index > 0 && row[0]?.trim().toLowerCase() === name.trim().toLowerCase());
 
     if (!userRow) {
       // No chip data found for user. Return empty values.
-      return res.status(200).json({ name, doubleUp: null, wildcard: null });
+      return res.status(200).json({
+        name,
+        groupStage: { doubleUp: null, wildcard: null },
+        super8: { doubleUp: null, wildcard: null },
+        semifinals: { doubleUp: null, wildcard: null },
+        finals: { doubleUp: null, wildcard: null }
+      });
     }
 
-    // Return the chip values (or null if empty)
-    const doubleUp = userRow[1] && userRow[1].trim() !== '' ? parseInt(userRow[1], 10) : null;
-    const wildcard = userRow[2] && userRow[2].trim() !== '' ? parseInt(userRow[2], 10) : null;
+    // Parse chip values for each phase
+    const parseChipValue = (value: string | undefined) => {
+      return value && value.trim() !== '' ? parseInt(value, 10) : null;
+    };
 
-    return res.status(200).json({ name, doubleUp, wildcard });
+    return res.status(200).json({
+      name,
+      groupStage: {
+        doubleUp: parseChipValue(userRow[1]),
+        wildcard: parseChipValue(userRow[2])
+      },
+      super8: {
+        doubleUp: parseChipValue(userRow[3]),
+        wildcard: parseChipValue(userRow[4])
+      },
+      semifinals: {
+        doubleUp: null, // No DoubleUp for semifinals
+        wildcard: parseChipValue(userRow[5])
+      },
+      finals: {
+        doubleUp: null, // No DoubleUp for finals
+        wildcard: parseChipValue(userRow[6])
+      }
+    });
   } catch (error) {
     console.error('Error fetching user chips:', error);
     return res.status(500).json({ error: 'Error fetching user chips' });

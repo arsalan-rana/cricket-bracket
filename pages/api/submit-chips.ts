@@ -19,10 +19,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Extract user and chip data from the request body.
-  const { name, chips } = req.body;
+  const { name, phase, chips } = req.body;
   if (
     !name ||
     typeof name !== 'string' ||
+    !phase ||
+    typeof phase !== 'string' ||
     !chips ||
     typeof chips !== 'object'
   ) {
@@ -38,6 +40,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Invalid wildcard chip data' });
   }
 
+  // Determine column indices based on phase
+  // DoubleUp only available for group-stage and super4
+  const phaseColumns: { [key: string]: { doubleUp: number | null; wildcard: number } } = {
+    'group-stage': { doubleUp: 1, wildcard: 2 },
+    'super4': { doubleUp: 3, wildcard: 4 },
+    'semifinals': { doubleUp: null, wildcard: 5 }, // No DoubleUp
+    'finals': { doubleUp: null, wildcard: 6 }, // No DoubleUp
+  };
+
+  const columnIndices = phaseColumns[phase];
+  if (!columnIndices) {
+    return res.status(400).json({ error: 'Invalid phase specified' });
+  }
+
+  // Validate that DoubleUp is not being used in phases where it's not allowed
+  if (chips.doubleUp !== undefined && columnIndices.doubleUp === null) {
+    return res.status(400).json({ error: 'DoubleUp chip is not available for this phase' });
+  }
+
   try {
     const auth = new google.auth.JWT({
       email: process.env.GOOGLE_CLIENT_EMAIL,
@@ -48,32 +69,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const sheets = google.sheets({ version: 'v4', auth });
     const spreadsheetId = process.env.GOOGLE_SHEET_ID!;
 
-    // Define the range to fetch the entire Chips tab.
+    // Define the range to fetch the entire Chips tab (now with 7 columns).
     // Assume header row is in row 1.
     const chipsSheetResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Chips!A1:C1000',
+      range: 'Chips!A1:G1000',
     });
 
     let rows = chipsSheetResponse.data.values || [];
 
     // If the sheet is empty, initialize header row.
     if (rows.length === 0) {
-      rows.push(["Player", "DoubleUp", "Wildcard"]);
+      rows.push([
+        "Player",
+        "DoubleUp_GroupStage",
+        "Wildcard_GroupStage",
+        "DoubleUp_Super8",
+        "Wildcard_Super8",
+        "Wildcard_Semifinals",
+        "Wildcard_Finals"
+      ]);
     }
 
     // Assume the header row is row 1.
     const header = rows[0];
     // Ensure our expected header columns are there.
-    if (header.length < 3) {
+    if (header.length < 7) {
       header[0] = "Player";
-      header[1] = "DoubleUp";
-      header[2] = "Wildcard";
+      header[1] = "DoubleUp_GroupStage";
+      header[2] = "Wildcard_GroupStage";
+      header[3] = "DoubleUp_Super8";
+      header[4] = "Wildcard_Super8";
+      header[5] = "Wildcard_Semifinals";
+      header[6] = "Wildcard_Finals";
       rows[0] = header;
       // Write header row back if needed.
       await sheets.spreadsheets.values.update({
         spreadsheetId,
-        range: 'Chips!A1:C1',
+        range: 'Chips!A1:G1',
         valueInputOption: 'RAW',
         requestBody: { values: [header] },
       });
@@ -89,16 +122,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Prepare the updated chip values.
-    // We'll update the DoubleUp (column B) and Wildcard (column C) values.
     const newDoubleUp = chips.doubleUp !== undefined ? chips.doubleUp.toString() : null;
     const newWildcard = chips.wildcard !== undefined ? chips.wildcard.toString() : null;
 
     if (playerRowIndex === -1) {
       // No row exists for this player, so append a new row.
-      const newRow = [name, newDoubleUp ?? '', newWildcard ?? ''];
+      const newRow = Array(7).fill('');
+      newRow[0] = name;
+      if (newDoubleUp !== null && columnIndices.doubleUp !== null) {
+        newRow[columnIndices.doubleUp] = newDoubleUp;
+      }
+      if (newWildcard !== null) {
+        newRow[columnIndices.wildcard] = newWildcard;
+      }
       await sheets.spreadsheets.values.append({
         spreadsheetId,
-        range: 'Chips!A:C',
+        range: 'Chips!A:G',
         valueInputOption: 'RAW',
         requestBody: {
           values: [newRow],
@@ -106,22 +145,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     } else {
       // Row exists—update it.
-      // Update the in-memory row.
       const currentRow = rows[playerRowIndex];
-      // Ensure the row has at least 3 columns.
-      while (currentRow.length < 3) {
+      // Ensure the row has at least 7 columns.
+      while (currentRow.length < 7) {
         currentRow.push('');
       }
       // If a chip value is provided, update that column.
-      if (newDoubleUp !== null) {
-        currentRow[1] = newDoubleUp;
+      if (newDoubleUp !== null && columnIndices.doubleUp !== null) {
+        currentRow[columnIndices.doubleUp] = newDoubleUp;
       }
       if (newWildcard !== null) {
-        currentRow[2] = newWildcard;
+        currentRow[columnIndices.wildcard] = newWildcard;
       }
       // Prepare the range for this row.
-      // Google Sheets rows are 1-indexed, so row number is playerRowIndex+1.
-      const updateRange = `Chips!A${playerRowIndex + 1}:C${playerRowIndex + 1}`;
+      const updateRange = `Chips!A${playerRowIndex + 1}:G${playerRowIndex + 1}`;
       await sheets.spreadsheets.values.update({
         spreadsheetId,
         range: updateRange,

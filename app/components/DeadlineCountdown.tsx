@@ -1,21 +1,23 @@
 // app/components/DeadlineCountdown.tsx
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Box, Typography, Skeleton } from '@mui/material';
 import { DateTime } from 'luxon';
+import { getAllDeadlines, getNow } from '@/lib/useTournament';
 
 const DeadlineCountdown = () => {
-  // Define all deadlines
-  const groupStageDeadline = DateTime.fromISO('2025-09-09T10:30:00', { zone: 'America/New_York' });
-  const super4Deadline = DateTime.fromISO('2025-09-20T10:30:00', { zone: 'America/New_York' });
-  const finalsDeadline = DateTime.fromISO('2025-09-28T10:30:00', { zone: 'America/New_York' });
-  
+  // Get deadlines from tournament config
+  const deadlines = useMemo(() => getAllDeadlines(), []);
+  const groupStageDeadline = deadlines.groupStage;
+  const super4Deadline = deadlines.super4;
+  const finalsDeadline = deadlines.finals;
+
   // Determine current deadline and phase
-  const now = DateTime.now().setZone('America/New_York');
+  const now = getNow();
   let currentDeadline: DateTime;
   let currentPhase: string;
-  
+
   if (now < groupStageDeadline) {
     currentDeadline = groupStageDeadline;
     currentPhase = 'group stage bracket';
@@ -29,7 +31,7 @@ const DeadlineCountdown = () => {
     currentDeadline = finalsDeadline; // All deadlines passed
     currentPhase = 'Finals pick';
   }
-  
+
   // Initialize timeLeft as null so we can show a skeleton until it's computed.
   const [timeLeft, setTimeLeft] = useState<string | null>(null);
   const [deadlinePassed, setDeadlinePassed] = useState<boolean>(false);

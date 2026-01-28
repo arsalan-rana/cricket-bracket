@@ -33,16 +33,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       range: 'Predictions Overview!A1:Z1000',
     });
     const data = sheetResponse.data.values;
-    if (!data || data.length === 0) {
-      return res.status(404).json({ error: 'Predictions Overview sheet is empty' });
-    }
-    const headers = data[0];
-    const userColumnIndex = headers.indexOf(name);
     const picks: { [match: number]: string } = {};
-    if (userColumnIndex !== -1) {
-      for (let i = 1; i < data.length; i++) {
-        if (data[i][userColumnIndex]) {
-          picks[i] = data[i][userColumnIndex]; // Store match number as key
+
+    // If sheet has data and headers exist
+    if (data && data.length > 0) {
+      const headers = data[0];
+      const userColumnIndex = headers.indexOf(name);
+      if (userColumnIndex !== -1) {
+        for (let i = 1; i < data.length; i++) {
+          if (data[i] && data[i][userColumnIndex]) {
+            picks[i] = data[i][userColumnIndex]; // Store match number as key
+          }
         }
       }
     }

@@ -36,142 +36,20 @@ import SendIcon from '@mui/icons-material/Send';
 import { DateTime } from 'luxon';
 import { useTheme } from '@mui/material/styles';
 
-// Team colors for enhanced visual design
-const teamColors: { [key: string]: { primary: string; secondary: string } } = {
-  'New Zealand': { primary: '#000000', secondary: '#FFFFFF' },
-  India: { primary: '#FF9933', secondary: '#138808' },
-  Bangladesh: { primary: '#006A4E', secondary: '#F42A41' },
-  Pakistan: { primary: '#00684A', secondary: '#FFFFFF' },
-  'South Africa': { primary: '#FFD100', secondary: '#007749' },
-  Australia: { primary: '#FFD100', secondary: '#007749' },
-  England: { primary: '#012169', secondary: '#C8102E' },
-  Afghanistan: { primary: '#D32011', secondary: '#000000' },
-  'Sri Lanka': { primary: '#FFB300', secondary: '#0056B3' },
-  Oman: { primary: '#EE2737', secondary: '#009639' },
-  UAE: { primary: '#00732F', secondary: '#FF0000' },
-  'Hong Kong': { primary: '#DE2910', secondary: '#FFFFFF' },
-};
-
-interface Fixture {
-  date: string;
-  match: number;
-  team1: string;
-  team2: string;
-  aiPrediction: string;
-  venue: string;
-}
-
-// Group Stage fixtures 
-const fixtures: Fixture[] = [
-  { date: "9 September", match: 1, team1: "Afghanistan", team2: "Hong Kong", aiPrediction: "Afghanistan", venue: "Sheikh Zayed Stadium, Abu Dhabi 🇦🇪" },
-  { date: "10 September", match: 2, team1: "India", team2: "UAE", aiPrediction: "India", venue: "Dubai International Stadium, Dubai 🇦🇪" },
-  { date: "11 September", match: 3, team1: "Bangladesh", team2: "Hong Kong", aiPrediction: "Bangladesh", venue: "Sheikh Zayed Stadium, Abu Dhabi 🇦🇪" },
-  { date: "12 September", match: 4, team1: "Oman", team2: "Pakistan", aiPrediction: "Pakistan", venue: "Dubai International Stadium, Dubai 🇦🇪" },
-  { date: "13 September", match: 5, team1: "Bangladesh", team2: "Sri Lanka", aiPrediction: "Bangladesh", venue: "Sheikh Zayed Stadium, Abu Dhabi 🇦🇪" },
-  { date: "14 September", match: 6, team1: "India", team2: "Pakistan", aiPrediction: "India", venue: "Dubai International Stadium, Dubai 🇦🇪" },
-  { date: "15 September", match: 7, team1: "Hong Kong", team2: "Sri Lanka", aiPrediction: "Sri Lanka", venue: "Dubai International Stadium, Dubai 🇦🇪" },
-  { date: "15 September", match: 8, team1: "UAE", team2: "Oman", aiPrediction: "UAE", venue: "Sheikh Zayed Stadium, Abu Dhabi 🇦🇪" },
-  { date: "16 September", match: 9, team1: "Afghanistan", team2: "Bangladesh", aiPrediction: "Afghanistan", venue: "Sheikh Zayed Stadium, Abu Dhabi 🇦🇪" },
-  { date: "17 September", match: 10, team1: "UAE", team2: "Pakistan", aiPrediction: "Pakistan", venue: "Dubai International Stadium, Dubai 🇦🇪" },
-  { date: "18 September", match: 11, team1: "Afghanistan", team2: "Sri Lanka", aiPrediction: "Afghanistan", venue: "Sheikh Zayed Stadium, Abu Dhabi 🇦🇪" },
-  { date: "19 September", match: 12, team1: "India", team2: "Oman", aiPrediction: "India", venue: "Sheikh Zayed Stadium, Abu Dhabi 🇦🇪" }
-];
-
-// Super 4 fixtures
-const playoffsFixtures: Fixture[] = [
-  {
-    date: "20 September",
-    match: 13,
-    team1: "Sri Lanka",
-    team2: "Bangladesh",
-    aiPrediction: "Sri Lanka",
-    venue: "Dubai International Stadium, Dubai 🇦🇪",
-  },
-  {
-    date: "21 September",
-    match: 14,
-    team1: "India",
-    team2: "Pakistan",
-    aiPrediction: "India",
-    venue: "Dubai International Stadium, Dubai 🇦🇪",
-  },
-  {
-    date: "23 September",
-    match: 15,
-    team1: "Pakistan",
-    team2: "Sri Lanka",
-    aiPrediction: "Pakistan",
-    venue: "Sheikh Zayed Stadium, Abu Dhabi 🇦🇪",
-  },
-  {
-    date: "24 September",
-    match: 16,
-    team1: "India",
-    team2: "Bangladesh",
-    aiPrediction: "India",
-    venue: "Dubai International Stadium, Dubai 🇦🇪",
-  },
-  {
-    date: "25 September",
-    match: 17,
-    team1: "Pakistan",
-    team2: "Bangladesh",
-    aiPrediction: "Pakistan",
-    venue: "Dubai International Stadium, Dubai 🇦🇪",
-  },
-  {
-    date: "26 September",
-    match: 18,
-    team1: "India",
-    team2: "Sri Lanka",
-    aiPrediction: "India",
-    venue: "Dubai International Stadium, Dubai 🇦🇪",
-  },
-];
-
-// Finals fixtures
-const finalsFixtures: Fixture[] = [
-  {
-    date: "28 September",
-    match: 19,
-    team1: "India",
-    team2: "Pakistan",
-    aiPrediction: "India",
-    venue: "Dubai International Stadium, Dubai 🇦🇪",
-  },
-];
-
-const bonusQuestions = [
-  "Tournament's Top Scorer",
-  "Tournament's Top Wicket-taker",
-  "Team with the Highest Single Match Score",
-  "Team with the Lowest Single Match Score",
-  "Most Sixes by a Player",
-  "Most Centuries by a Player",
-  "Player with the Most Catches",
-  "Player with the Most Player-of-the-Match Awards",
-  "Best Bowling Economy (minimum 10 overs)",
-  "Highest Individual Score",
-  "Fastest Fifty",
-  "Fastest Century",
-  "Player of the Tournament"
-];
-
-const bonusPredictions: { [key: string]: string } = {
-  "Tournament's Top Scorer": "Shubman Gill (India)",
-  "Tournament's Top Wicket-taker": "Rashid Khan (Afghanistan)",
-  "Team with the Highest Single Match Score": "India",
-  "Team with the Lowest Single Match Score": "Hong Kong",
-  "Most Sixes by a Player": "Suryakumar Yadav (India)",
-  "Most Centuries by a Player": "Shubman Gill (India)",
-  "Player with the Most Catches": "Suryakumar Yadav (India)",
-  "Player with the Most Player-of-the-Match Awards": "Rashid Khan (Afghanistan)",
-  "Best Bowling Economy (minimum 10 overs)": "Jasprit Bumrah (India)",
-  "Highest Individual Score": "Shubman Gill (India)",
-  "Fastest Fifty": "Abhishek Sharma (India)",
-  "Fastest Century": "Suryakumar Yadav (India)",
-  "Player of the Tournament": "Suryakumar Yadav (India)"
-};
+// Import tournament configuration utilities
+import {
+  teamColors,
+  bonusQuestions,
+  bonusPredictions,
+  getAllDeadlines,
+  getFixtureStartTime,
+  getNow,
+  useAllFixtures,
+  getFutureFixtures,
+  getConfig,
+  getPhaseForMatch,
+  Fixture,
+} from '@/lib/useTournament';
 
 // TabPanel component (from MUI docs)
 interface TabPanelProps {
@@ -200,27 +78,29 @@ function a11yProps(index: number) {
   };
 }
 
-// Helper to get fixture start time (assuming fixtures start at 18:30 EST on the given date in 2025)
-// Using Luxon with an explicit time zone
-const getFixtureStartTime = (fixture: Fixture) => {
-  const dt = DateTime.fromFormat(
-    `${fixture.date} 2025 18:30`, 
-    'd MMMM yyyy HH:mm',
-    { zone: 'America/New_York' }
-  );
-  return dt.toJSDate();
-};
-
 const BracketSubmission = () => {
   const { data: session } = useSession();
   const theme = useTheme();
-  const [tabValue, setTabValue] = useState(3); // Default to Finals tab
+  const config = getConfig();
+
+  // Fetch fixtures from API/config
+  const {
+    groupStageFixtures: fixtures,
+    super4Fixtures: playoffsFixtures,
+    semifinalsFixtures,
+    finalsFixtures,
+    isLoading: fixturesLoading
+  } = useAllFixtures();
+
+  const [tabValue, setTabValue] = useState(0); // Default to Fixture Picks tab
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Group stage picks state
   const [predictions, setPredictions] = useState<{ [match: number]: string }>({});
   // Playoffs picks state
   const [playoffsPredictions, setPlayoffsPredictions] = useState<{ [match: number]: string }>({});
+  // Semifinals picks state
+  const [semifinalsPredictions, setSemifinalsPredictions] = useState<{ [match: number]: string }>({});
   // Finals picks state
   const [finalsPredictions, setFinalsPredictions] = useState<{ [match: number]: string }>({});
   const [detailsOpen, setDetailsOpen] = useState<{ [match: number]: boolean }>({});
@@ -231,14 +111,24 @@ const BracketSubmission = () => {
   const [showDeadlinePopup, setShowDeadlinePopup] = useState(false);
   const [snackbars, setSnackbars] = useState<Array<{ id: number; open: boolean; message: string; severity: "success" | "error" | "warning" }>>([]);
 
-  // --- CHIP STATES ---
+  // --- CHIP STATES (Per Phase) ---
   const [selectedChipMenu, setSelectedChipMenu] = useState<"doubleUp" | "wildcard" | null>(null);
   const [selectedDoubleUp, setSelectedDoubleUp] = useState<number | null>(null);
   const [selectedWildcard, setSelectedWildcard] = useState<number | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [userChips, setUserChips] = useState<{ doubleUp: number | null; wildcard: number | null }>({
-    doubleUp: null,
-    wildcard: null
+
+  // Chips organized by phase
+  type PhaseChips = { doubleUp: number | null; wildcard: number | null };
+  const [userChips, setUserChips] = useState<{
+    groupStage: PhaseChips;
+    super8: PhaseChips;
+    semifinals: PhaseChips;
+    finals: PhaseChips;
+  }>({
+    groupStage: { doubleUp: null, wildcard: null },
+    super8: { doubleUp: null, wildcard: null },
+    semifinals: { doubleUp: null, wildcard: null },
+    finals: { doubleUp: null, wildcard: null },
   });
 
   const showSnackbar = (message: string, severity: "success" | "error" | "warning") => {
@@ -250,20 +140,28 @@ const BracketSubmission = () => {
     setSnackbars((prev) => prev.filter((snackbar) => snackbar.id !== id));
   };
 
-  // Deadlines for each bracket type
-  const groupStageDeadline = DateTime.fromISO('2025-09-09T10:30:00', { zone: 'America/New_York' });
-  const playoffsDeadline = DateTime.fromISO('2025-09-20T10:29:00', { zone: 'America/New_York' });
-  const finalsDeadline = DateTime.fromISO('2025-09-28T10:30:00', { zone: 'America/New_York' });
+  // Deadlines for each bracket type (from tournament config)
+  const deadlines = getAllDeadlines();
+  const groupStageDeadline = deadlines['group-stage'] || deadlines.groupStage;
+  const playoffsDeadline = deadlines['super4'] || deadlines.super4;
+  const semifinalsDeadline = deadlines['semifinals'] || deadlines.semifinals;
+  const finalsDeadline = deadlines['finals'] || deadlines.finals;
 
-  const now = DateTime.now().setZone('America/New_York');
+  const now = getNow();
   const isGroupStagePastDeadline = now > groupStageDeadline;
   const isPlayoffsPastDeadline = now > playoffsDeadline;
+  const isSemifinalsPastDeadline = semifinalsDeadline ? now > semifinalsDeadline : isPlayoffsPastDeadline;
   const isFinalsPastDeadline = now > finalsDeadline;
 
-  // Show Super 4 tab - enabled now since Super 4 starts tomorrow
-  const showSuper4Tab = true;
-  // Show Finals tab only after playoffs deadline passes  
-  const showFinalsTab = isPlayoffsPastDeadline;
+  // Get phase names from config
+  const super4Phase = config.phases.find((p) => p.id === 'super4');
+  const semifinalsPhase = config.phases.find((p) => p.id === 'semifinals');
+  const finalsPhase = config.phases.find((p) => p.id === 'finals');
+
+  // Show tabs based on deadlines
+  const showSuper4Tab = isGroupStagePastDeadline;
+  const showSemifinalsTab = semifinalsPhase && isSemifinalsPastDeadline;
+  const showFinalsTab = isFinalsPastDeadline;
 
   // For group stage we only lock if the user already finalized their submission.
   const locked = isGroupStagePastDeadline && alreadySubmitted;
@@ -310,7 +208,7 @@ const BracketSubmission = () => {
     fetchPlayoffsFinalsPicks();
   }, [session]);
 
-  // Fetch user's chip usage from the backend
+  // Fetch user's chip usage from the backend (per phase)
   useEffect(() => {
     const fetchUserChips = async () => {
       if (!session?.user?.name) return;
@@ -319,8 +217,10 @@ const BracketSubmission = () => {
         if (response.ok) {
           const data = await response.json();
           setUserChips({
-            doubleUp: data.doubleUp,
-            wildcard: data.wildcard
+            groupStage: data.groupStage || { doubleUp: null, wildcard: null },
+            super8: data.super8 || { doubleUp: null, wildcard: null },
+            semifinals: data.semifinals || { doubleUp: null, wildcard: null },
+            finals: data.finals || { doubleUp: null, wildcard: null },
           });
         }
       } catch (error) {
@@ -330,16 +230,41 @@ const BracketSubmission = () => {
     fetchUserChips();
   }, [session]);
 
-  // Get the current time in Eastern Time using Luxon
-  const nowEastern = DateTime.now().setZone('America/New_York').toJSDate();
-  
-  // Include both group stage fixtures and Super 4 fixtures for chip selection
-  const allFixturesForChips = [
-    ...fixtures.filter(fixture => getFixtureStartTime(fixture) > nowEastern),
-    ...playoffsFixtures.filter(fixture => getFixtureStartTime(fixture) > nowEastern)
-  ].sort((a, b) => a.match - b.match);
-  
-  const availableFixtures = allFixturesForChips;
+  // Determine current phase based on active tab
+  const getCurrentPhase = (): 'group-stage' | 'super4' | 'semifinals' | 'finals' | null => {
+    if (tabValue === 0 || tabValue === 1) return 'group-stage';
+    if (tabValue === 2) return 'super4';
+    if (showSemifinalsTab && tabValue === 3) return 'semifinals';
+    if (showFinalsTab && tabValue === (showSemifinalsTab ? 4 : 3)) return 'finals';
+    return null;
+  };
+
+  const currentPhase = getCurrentPhase();
+
+  // Get current phase chips
+  const getCurrentPhaseChips = (): PhaseChips => {
+    if (currentPhase === 'group-stage') return userChips.groupStage;
+    if (currentPhase === 'super4') return userChips.super8;
+    if (currentPhase === 'semifinals') return userChips.semifinals;
+    if (currentPhase === 'finals') return userChips.finals;
+    return { doubleUp: null, wildcard: null };
+  };
+
+  const currentPhaseChips = getCurrentPhaseChips();
+
+  // Get fixtures for current phase only (future fixtures within the phase)
+  const getCurrentPhaseFixtures = (): Fixture[] => {
+    let phaseFixtures: Fixture[] = [];
+    if (currentPhase === 'group-stage') phaseFixtures = fixtures;
+    else if (currentPhase === 'super4') phaseFixtures = playoffsFixtures;
+    else if (currentPhase === 'semifinals') phaseFixtures = semifinalsFixtures;
+    else if (currentPhase === 'finals') phaseFixtures = finalsFixtures;
+
+    // Filter to only future fixtures
+    return getFutureFixtures(phaseFixtures);
+  };
+
+  const availableFixtures = getCurrentPhaseFixtures();
 
   const handleSelection = (match: number, team: string) => {
     if (locked) return;
@@ -352,6 +277,14 @@ const BracketSubmission = () => {
   const handlePlayoffsSelection = (match: number, team: string) => {
     if (isPlayoffsPastDeadline) return;
     setPlayoffsPredictions((prev) => ({
+      ...prev,
+      [match]: team,
+    }));
+  };
+
+  const handleSemifinalsSelection = (match: number, team: string) => {
+    if (isSemifinalsPastDeadline) return;
+    setSemifinalsPredictions((prev) => ({
       ...prev,
       [match]: team,
     }));
@@ -545,27 +478,31 @@ const BracketSubmission = () => {
 
   const handleConfirmChip = async () => {
     setConfirmDialogOpen(false);
-  
+
+    if (!currentPhase) {
+      showSnackbar("Unable to determine current phase.", "error");
+      return;
+    }
+
     if (selectedChipMenu === "wildcard" && selectedWildcard) {
-      const fixture = [...fixtures, ...playoffsFixtures].find(f => f.match === selectedWildcard);
+      const fixture = availableFixtures.find(f => f.match === selectedWildcard);
       if (!fixture) {
         showSnackbar("Invalid fixture selection.", "error");
         return;
       }
       
-      // For Super 4 fixtures, use playoffsPredictions, for group stage use predictions
-      const isSuper4 = fixture.match >= 13;
-      const currentPick = isSuper4 ? playoffsPredictions[fixture.match] : predictions[fixture.match];
-      
-      console.log('Wildcard debug:', { 
-        fixtureMatch: fixture.match, 
-        isSuper4, 
-        currentPick, 
-        team1: fixture.team1, 
-        team2: fixture.team2,
-        playoffsPredictions: isSuper4 ? playoffsPredictions : 'N/A'
-      });
-      
+      // Get current pick based on phase
+      let currentPick: string | undefined;
+      if (currentPhase === 'group-stage') {
+        currentPick = predictions[fixture.match];
+      } else if (currentPhase === 'super4') {
+        currentPick = playoffsPredictions[fixture.match];
+      } else if (currentPhase === 'semifinals') {
+        currentPick = semifinalsPredictions[fixture.match];
+      } else if (currentPhase === 'finals') {
+        currentPick = finalsPredictions[fixture.match];
+      }
+
       let newPick: string;
       if (currentPick === fixture.team1) {
         newPick = fixture.team2;
@@ -576,35 +513,12 @@ const BracketSubmission = () => {
         newPick = fixture.team2;
       }
       
-      // Update the appropriate state
-      if (isSuper4) {
-        const updatedPlayoffsPicks = { ...playoffsPredictions, [fixture.match]: newPick };
-        setPlayoffsPredictions(updatedPlayoffsPicks);
-        
-        try {
-          const bracketResponse = await fetch('/api/submit-playoffs', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({
-              name: session?.user?.name,
-              picks: updatedPlayoffsPicks,
-            }),
-          });
-          
-          if (!bracketResponse.ok) {
-            showSnackbar("Failed to update your Super 4 picks with the wildcard change.", "error");
-            return;
-          }
-        } catch (error) {
-          showSnackbar("An error occurred while updating Super 4 picks.", "error");
-          return;
-        }
-      } else {
-        const updatedPicks = { ...predictions, [fixture.match]: newPick };
-        setPredictions(updatedPicks);
-        
-        try {
+      // Update the appropriate state based on phase
+      try {
+        if (currentPhase === 'group-stage') {
+          const updatedPicks = { ...predictions, [fixture.match]: newPick };
+          setPredictions(updatedPicks);
+
           const bracketResponse = await fetch('/api/submit-bracket', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -616,15 +530,71 @@ const BracketSubmission = () => {
               isWildcard: true,
             }),
           });
-          
+
           if (!bracketResponse.ok) {
             showSnackbar("Failed to update your bracket with the wildcard change.", "error");
             return;
           }
-        } catch (error) {
-          showSnackbar("An error occurred while updating bracket.", "error");
-          return;
+        } else if (currentPhase === 'super4') {
+          const updatedPlayoffsPicks = { ...playoffsPredictions, [fixture.match]: newPick };
+          setPlayoffsPredictions(updatedPlayoffsPicks);
+
+          const bracketResponse = await fetch('/api/submit-playoffs', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              name: session?.user?.name,
+              picks: updatedPlayoffsPicks,
+            }),
+          });
+
+          if (!bracketResponse.ok) {
+            showSnackbar("Failed to update your picks with the wildcard change.", "error");
+            return;
+          }
+        } else if (currentPhase === 'semifinals') {
+          const updatedSemifinalsPicks = { ...semifinalsPredictions, [fixture.match]: newPick };
+          setSemifinalsPredictions(updatedSemifinalsPicks);
+
+          // For semifinals, we might use the same finals API endpoint or create a new one
+          // For now, using finals endpoint as semifinals shares the same sheet structure
+          const bracketResponse = await fetch('/api/submit-finals', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              name: session?.user?.name,
+              picks: updatedSemifinalsPicks,
+            }),
+          });
+
+          if (!bracketResponse.ok) {
+            showSnackbar("Failed to update your picks with the wildcard change.", "error");
+            return;
+          }
+        } else if (currentPhase === 'finals') {
+          const updatedFinalsPicks = { ...finalsPredictions, [fixture.match]: newPick };
+          setFinalsPredictions(updatedFinalsPicks);
+
+          const bracketResponse = await fetch('/api/submit-finals', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              name: session?.user?.name,
+              picks: updatedFinalsPicks,
+            }),
+          });
+
+          if (!bracketResponse.ok) {
+            showSnackbar("Failed to update your picks with the wildcard change.", "error");
+            return;
+          }
         }
+      } catch (error) {
+        showSnackbar("An error occurred while updating picks.", "error");
+        return;
       }
       
       try {
@@ -634,24 +604,32 @@ const BracketSubmission = () => {
           credentials: 'include',
           body: JSON.stringify({
             name: session?.user?.name,
+            phase: currentPhase,
             chips: { wildcard: fixture.match },
           }),
         });
-        
+
         if (!chipResponse.ok) {
           showSnackbar("Picks updated, but failed to record wildcard usage.", "error");
           return;
         }
-        
+
         showSnackbar("Wildcard applied! Your prediction has been swapped.", "success");
-        setUserChips((prev) => ({ ...prev, wildcard: fixture.match }));
+
+        // Update the specific phase's chips
+        setUserChips((prev) => ({
+          ...prev,
+          [currentPhase === 'group-stage' ? 'groupStage' : currentPhase === 'super4' ? 'super8' : currentPhase]: {
+            ...prev[currentPhase === 'group-stage' ? 'groupStage' : currentPhase === 'super4' ? 'super8' : currentPhase as 'semifinals' | 'finals'],
+            wildcard: fixture.match
+          }
+        }));
         setSelectedChipMenu(null);
         setSelectedWildcard(null);
       } catch (error) {
         showSnackbar("An error occurred while recording wildcard usage.", "error");
       }
     } else if (selectedChipMenu === "doubleUp" && selectedDoubleUp) {
-      let chipData: any = { doubleUp: selectedDoubleUp };
       try {
         const response = await fetch('/api/submit-chips', {
           method: 'POST',
@@ -659,12 +637,21 @@ const BracketSubmission = () => {
           credentials: 'include',
           body: JSON.stringify({
             name: session?.user?.name,
-            chips: chipData,
+            phase: currentPhase,
+            chips: { doubleUp: selectedDoubleUp },
           }),
         });
         if (response.ok) {
           showSnackbar("Chip activated successfully!", "success");
-          setUserChips((prev) => ({ ...prev, doubleUp: chipData.doubleUp }));
+
+          // Update the specific phase's chips
+          setUserChips((prev) => ({
+            ...prev,
+            [currentPhase === 'group-stage' ? 'groupStage' : currentPhase === 'super4' ? 'super8' : currentPhase as 'semifinals' | 'finals']: {
+              ...prev[currentPhase === 'group-stage' ? 'groupStage' : currentPhase === 'super4' ? 'super8' : currentPhase as 'semifinals' | 'finals'],
+              doubleUp: selectedDoubleUp
+            }
+          }));
           setSelectedChipMenu(null);
           setSelectedDoubleUp(null);
         } else {
@@ -733,22 +720,26 @@ const BracketSubmission = () => {
             Activate a Chip
           </Typography>
           <Box display="flex" justifyContent="center" gap={2}>
-            <IconButton
-              onClick={() => handleChipMenuToggle("doubleUp")}
-              disabled={userChips.doubleUp !== null}
-              size="large"
-              sx={{
-                backgroundColor: 'grey.200',
-                '&:hover': { backgroundColor: 'grey.300' },
-                borderRadius: '50%',
-                p: 1.5,
-              }}
-            >
-              <LooksTwoIcon color={userChips.doubleUp !== null ? "disabled" : "primary"} />
-            </IconButton>
+            {/* DoubleUp only available for group-stage and super4 */}
+            {(currentPhase === 'group-stage' || currentPhase === 'super4') && (
+              <IconButton
+                onClick={() => handleChipMenuToggle("doubleUp")}
+                disabled={currentPhaseChips.doubleUp !== null}
+                size="large"
+                sx={{
+                  backgroundColor: 'grey.200',
+                  '&:hover': { backgroundColor: 'grey.300' },
+                  borderRadius: '50%',
+                  p: 1.5,
+                }}
+              >
+                <LooksTwoIcon color={currentPhaseChips.doubleUp !== null ? "disabled" : "primary"} />
+              </IconButton>
+            )}
+            {/* Wildcard available for all phases */}
             <IconButton
               onClick={() => handleChipMenuToggle("wildcard")}
-              disabled={userChips.wildcard !== null}
+              disabled={currentPhaseChips.wildcard !== null}
               size="large"
               sx={{
                 backgroundColor: 'grey.200',
@@ -757,7 +748,7 @@ const BracketSubmission = () => {
                 p: 1.5,
               }}
             >
-              <ShuffleIcon color={userChips.wildcard !== null ? "disabled" : "primary"} />
+              <ShuffleIcon color={currentPhaseChips.wildcard !== null ? "disabled" : "primary"} />
             </IconButton>
           </Box>
         {selectedChipMenu === "doubleUp" && (
@@ -841,21 +832,20 @@ const BracketSubmission = () => {
         <Tabs value={tabValue} onChange={handleTabChange} aria-label="Bracket Submission Tabs">
           <Tab label="Fixture Picks" {...a11yProps(0)} />
           <Tab label="Bonus Picks" {...a11yProps(1)} />
-          {showSuper4Tab && <Tab label="Super 4" {...a11yProps(2)} />}
-          {showFinalsTab && <Tab label="Finals" {...a11yProps(3)} />}
+          {showSuper4Tab && <Tab label={super4Phase?.name || 'Super 4'} {...a11yProps(2)} />}
+          {showSemifinalsTab && <Tab label={semifinalsPhase?.name || 'Semi-Finals'} {...a11yProps(3)} />}
+          {showFinalsTab && <Tab label={finalsPhase?.name || 'Final'} {...a11yProps(showSemifinalsTab ? 4 : 3)} />}
         </Tabs>
       </Box>
 
       {/* Group Stage Tab */}
       <TabPanel value={tabValue} index={0}>
         {fixtures.map((fixture) => {
-          const getMatchTypeInfo = (matchNum: number) => {
-            if (matchNum <= 12) return { label: 'Group Stage', color: '#1B5E20', icon: '⚪' };
-            if (matchNum <= 18) return { label: 'Super 4', color: '#FF6F00', icon: '🟡' };
-            return { label: 'Final', color: '#D32F2F', icon: '🏆' };
+          const matchInfo = getPhaseForMatch(fixture.match) || {
+            name: 'Match',
+            color: '#1B5E20',
+            icon: '🏏'
           };
-          
-          const matchInfo = getMatchTypeInfo(fixture.match);
 
           return (
             <Box 
@@ -918,10 +908,10 @@ const BracketSubmission = () => {
                 >
                   Match {fixture.match} - {fixture.date}
                 </Typography>
-                <Chip 
-                  label={`${matchInfo.icon} ${matchInfo.label}`}
+                <Chip
+                  label={`${matchInfo.icon} ${matchInfo.name}`}
                   size="small"
-                  sx={{ 
+                  sx={{
                     backgroundColor: matchInfo.color,
                     color: 'white',
                     fontWeight: 600,
@@ -1117,13 +1107,11 @@ const BracketSubmission = () => {
       {/* Super 4 Tab */}
       {showSuper4Tab && <TabPanel value={tabValue} index={2}>
         {playoffsFixtures.map((fixture) => {
-          const getMatchTypeInfo = (matchNum: number) => {
-            if (matchNum <= 12) return { label: 'Group Stage', color: '#1B5E20', icon: '⚪' };
-            if (matchNum <= 18) return { label: 'Super 4', color: '#FF6F00', icon: '🟡' };
-            return { label: 'Final', color: '#D32F2F', icon: '🏆' };
+          const matchInfo = getPhaseForMatch(fixture.match) || {
+            name: 'Match',
+            color: '#FF6F00',
+            icon: '🟡'
           };
-          
-          const matchInfo = getMatchTypeInfo(fixture.match);
 
           return (
             <Box 
@@ -1187,7 +1175,7 @@ const BracketSubmission = () => {
                     Match {fixture.match} - {fixture.date}
                   </Typography>
                   <Chip 
-                    label={`${matchInfo.icon} ${matchInfo.label}`}
+                    label={`${matchInfo.icon} ${matchInfo.name}`}
                     size="small"
                     sx={{ 
                       backgroundColor: matchInfo.color,

@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../pages/api/auth/[...nextauth]';
 import { google } from 'googleapis';
 import { DateTime } from 'luxon';
+import { getBonusQuestionStrings } from '@/lib/tournament';
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
@@ -152,22 +153,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       bonusData[0] = bonusHeader;
     }
 
-    // Define bonus categories (in the fixed order you expect)
-    const bonusQuestions = [
-      "Tournament’s Top Scorer",
-      "Tournament’s Top Wicket-taker",
-      "Team with the Highest Single Match Score",
-      "Team with the Lowest Single Match Score",
-      "Most Sixes by a Player",
-      "Most Centuries by a Player",
-      "Player with the Most Catches",
-      "Player with the Most Player-of-the-Match Awards",
-      "Best Bowling Economy (12.5 overs minimum)",
-      "Highest Individual Score",
-      "Fastest Fifty",
-      "Fastest Century",
-      "Player of the Tournament"
-    ];
+    // Get bonus categories from tournament config
+    const bonusQuestions = getBonusQuestionStrings();
 
     // For each bonus question, find its row (matching the first column) and update the user's cell.
     bonusQuestions.forEach((question) => {

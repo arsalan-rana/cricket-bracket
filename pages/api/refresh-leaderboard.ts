@@ -4,11 +4,21 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
 import { google } from 'googleapis';
 import { DateTime } from 'luxon';
+import {
+  getConfig,
+  getDeadline,
+  getPhase,
+  getPhaseScoring,
+  getScoringRules,
+  getMatchOffset,
+} from '@/lib/tournament';
+import { SHEET_RANGES, SYSTEM_COLUMNS } from '@/lib/sheets';
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
-// Set the deadline as a Luxon DateTime in EST.
-const deadlineDT = DateTime.fromISO("2025-09-09T10:30:00", { zone: "America/New_York" });
+// Get tournament config and deadlines
+const config = getConfig();
+const deadlineDT = getDeadline('group-stage');
 
 // Hardcoded bonus points mapping for Asia Cup 2025.
 // Update this with the actual participants and their bonus points.
@@ -86,24 +96,23 @@ function calculateLeaderboard(
       const winner = row[winnerIndex];
       if (!winner) continue;
       
-      // Calculate actual match number based on stage
+      // Calculate actual match number based on stage (using config offsets)
       let matchNumber = i; // Default for group stage
       if (stage === "Super 4") {
-        matchNumber = 12 + i; // Super 4 matches are 13-18 (rows 1-6)
+        matchNumber = getMatchOffset('super4') + i; // Super 4 matches start after group stage
       } else if (stage === "Finals") {
-        matchNumber = 18 + i; // Finals start after Super 4
+        matchNumber = getMatchOffset('finals') + i; // Finals start after Super 4
       }
 
       if (stage === "Playoffs Semi-finals" || stage === "Playoffs Final" || stage === "Finals" || stage === "Super 4") {
+        // Get pool size from config
         let pool = 0;
-        if (stage === "Playoffs Semi-finals") {
-          pool = 160;
-        } else if (stage === "Playoffs Final") {
-          pool = 160; // If you have separate pool for playoffs final, adjust here.
+        if (stage === "Playoffs Semi-finals" || stage === "Playoffs Final" || stage === "Super 4") {
+          const super4Scoring = getPhaseScoring('super4');
+          pool = super4Scoring.poolSize || 160;
         } else if (stage === "Finals") {
-          pool = 260;
-        } else if (stage === "Super 4") {
-          pool = 160; // Same pool as playoffs for Super 4 matches
+          const finalsScoring = getPhaseScoring('finals');
+          pool = finalsScoring.poolSize || 260;
         }
         // Count the number of players who picked the winner.
         let correctCount = 0;
@@ -144,10 +153,11 @@ function calculateLeaderboard(
           if (!['Date', 'Match', 'Team 1', 'Team 2', 'Winner', 'POTM'].includes(playerName)) {
             initPlayer(playerName);
             if (winner === "DRAW") {
-              let pointsAwarded = 5;
+              const groupScoring = getPhaseScoring('group-stage');
+              let pointsAwarded = groupScoring.drawPoints || 5;
               // Handle double up chip for Group Stage in case of DRAW
               if (stage === "Group Stage" && doubleUpMap && doubleUpMap[playerName] === matchNumber) {
-                pointsAwarded = 10;
+                pointsAwarded = (groupScoring.drawPoints || 5) * 2;
               }
               players[playerName].totalPoints += pointsAwarded;
               players[playerName].groupPoints += pointsAwarded;
@@ -157,10 +167,12 @@ function calculateLeaderboard(
                 if (submission && submission > deadlineDT) {
                   const diffDays = submission.diff(deadlineDT, 'days').days;
                   const lateMatches = Math.ceil(diffDays);
+                  const scoringRules = getScoringRules();
+                  const penalty = scoringRules.latePenaltyPerDay;
                   if (matchNumber <= lateMatches) {
-                    players[playerName].penalty -= 10;
-                    players[playerName].totalPoints -= 10;
-                    players[playerName].groupPoints -= 10;
+                    players[playerName].penalty -= penalty;
+                    players[playerName].totalPoints -= penalty;
+                    players[playerName].groupPoints -= penalty;
                     continue; // Skip awarding points for this match.
                   }
                 }
@@ -179,9 +191,11 @@ function calculateLeaderboard(
     }
   };
 
-  // Process Group Stage predictions: base points = 10.
+  // Process Group Stage predictions
+  const groupStageScoring = getPhaseScoring('group-stage');
+  const groupStagePoints = groupStageScoring.pointsPerCorrect || 10;
   if (groupStageData && groupStageData.length > 0) {
-    processPredictions(groupStageData, 10, "Group Stage", doubleUpChips);
+    processPredictions(groupStageData, groupStagePoints, "Group Stage", doubleUpChips);
   } else {
     console.error("Group Stage data is empty or invalid");
   }

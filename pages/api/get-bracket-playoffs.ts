@@ -2,6 +2,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getSession } from 'next-auth/react';
 import { google } from 'googleapis';
+import { getMatchOffset } from '@/lib/tournament';
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
 
@@ -32,20 +33,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       range: 'Super 4!A1:Z1000',
     });
     const playoffsData = playoffsResponse.data.values;
-    if (!playoffsData || playoffsData.length === 0) {
-      return res.status(404).json({ error: 'Super 4 sheet is empty' });
-    }
-    const playoffsHeaders = playoffsData[0];
-    const userColumnIndex = playoffsHeaders.indexOf(name);
     const playoffsPicks: { [match: number]: string } = {};
-    if (userColumnIndex !== -1) {
-        const playoffsOffset = 12;
+
+    // If sheet has data and headers exist
+    if (playoffsData && playoffsData.length > 0) {
+      const playoffsHeaders = playoffsData[0];
+      const userColumnIndex = playoffsHeaders.indexOf(name);
+      if (userColumnIndex !== -1) {
+        const playoffsOffset = getMatchOffset('super4');
         for (let i = 1; i < playoffsData.length; i++) {
-          if (playoffsData[i][userColumnIndex]) {
-            // Add the offset so that row index 2 corresponds to match 13, row index 3 to match 14, etc.
+          if (playoffsData[i] && playoffsData[i][userColumnIndex]) {
+            // Add the offset so that row index corresponds to match number
             playoffsPicks[i + playoffsOffset] = playoffsData[i][userColumnIndex];
           }
         }
+      }
     }
     
     // Fetch fixture picks from the "Finals" tab

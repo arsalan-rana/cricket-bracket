@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../pages/api/auth/[...nextauth]';
 import { google } from 'googleapis';
 import { DateTime } from 'luxon';
+import { getMatchOffset } from '@/lib/tournament';
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
@@ -90,10 +91,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Step 3: Update each row with the user's picks.
-    // Use an offset so that match number 13 maps to row 2 (index 1) and match 14 maps to row 3 (index 2).
-    // In this example, offset = 11.
+    // Use an offset so that match number maps to correct row index
+    // The offset comes from tournament config
     const updatedData = [...data];
-    const offset = 12;
+    const offset = getMatchOffset('super4');
     for (const matchNumber in picks) {
       const numericMatch = parseInt(matchNumber, 10);
       const rowIndex = numericMatch - offset;

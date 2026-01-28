@@ -18,10 +18,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import DeadlineCountdown from './DeadlineCountdown';
+import { getConfig } from '@/lib/useTournament';
 
 const NavBar: React.FC = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const pathname = usePathname();
+  const config = getConfig();
 
   const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
     if (
@@ -146,14 +148,14 @@ const NavBar: React.FC = () => {
         boxShadow: '0 4px 20px rgba(27, 94, 32, 0.3)'
       }}>
         <Toolbar>
-          <Typography variant="h6" sx={{ 
-            flexGrow: 1, 
+          <Typography variant="h6" sx={{
+            flexGrow: 1,
             textAlign: 'center',
             fontWeight: 700,
             letterSpacing: '0.02em',
             textShadow: '0 1px 2px rgba(0,0,0,0.1)'
           }}>
-            🏏 Asia Cup 2025 Bracket Challenge
+            🏏 {config.name}
           </Typography>
           <IconButton 
             edge="start" 
