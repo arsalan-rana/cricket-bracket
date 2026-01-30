@@ -79,7 +79,7 @@ const DeadlineCountdown = () => {
             // Show a skeleton placeholder covering the entire message area until timeLeft is computed.
             <Skeleton variant="text" width="100%" height={24} />
           ) : (
-            `Deadline to submit your ${currentPhase}: ${timeLeft}`
+            `Deadline to submit: ${timeLeft}`
           )}
         </Typography>
       )}

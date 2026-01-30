@@ -1,7 +1,7 @@
 'use client';
 
 import { useSession, signIn } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import {
   Container,
   Typography,
@@ -27,12 +27,14 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Chip
+  Chip,
+  Tooltip
 } from '@mui/material';
 import { ExpandMore, ExpandLess } from '@mui/icons-material';
 import LooksTwoIcon from '@mui/icons-material/LooksTwo';
 import ShuffleIcon from '@mui/icons-material/Shuffle';
 import SendIcon from '@mui/icons-material/Send';
+import SaveIcon from '@mui/icons-material/Save';
 import { DateTime } from 'luxon';
 import { useTheme } from '@mui/material/styles';
 
@@ -67,7 +69,7 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ p: { xs: 1, sm: 3 }, position: 'relative' }}>{children}</Box>}
     </div>
   );
 }
@@ -153,6 +155,21 @@ const BracketSubmission = () => {
   const isSemifinalsPastDeadline = semifinalsDeadline ? now > semifinalsDeadline : isPlayoffsPastDeadline;
   const isFinalsPastDeadline = now > finalsDeadline;
 
+  // Draft status tracking
+  const [submissionStatus, setSubmissionStatus] = useState<{
+    groupStage: 'DRAFT' | 'SUBMITTED' | 'NONE',
+    super8: 'DRAFT' | 'SUBMITTED' | 'NONE',
+    finals: 'DRAFT' | 'SUBMITTED' | 'NONE'
+  }>({
+    groupStage: 'NONE',
+    super8: 'NONE',
+    finals: 'NONE'
+  });
+
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Get phase names from config
   const super4Phase = config.phases.find((p) => p.id === 'super4');
   const semifinalsPhase = config.phases.find((p) => p.id === 'semifinals');
@@ -228,6 +245,98 @@ const BracketSubmission = () => {
       }
     };
     fetchUserChips();
+  }, [session]);
+
+  // Fetch submission status for draft tracking
+  useEffect(() => {
+    const fetchStatus = async () => {
+      if (!session?.user?.name) return;
+
+      const userName = session.user.name;
+      const phases = ['group-stage', 'super8', 'finals'];
+      const statuses = await Promise.all(
+        phases.map(phase =>
+          fetch(`/api/get-submission-status?name=${userName}&phase=${phase}`)
+            .then(r => r.json())
+            .catch(() => ({ status: 'NONE' }))
+        )
+      );
+
+      setSubmissionStatus({
+        groupStage: statuses[0].status,
+        super8: statuses[1].status,
+        finals: statuses[2].status
+      });
+    };
+
+    fetchStatus();
+  }, [session]);
+
+  // Auto-save to localStorage (debounced 30 seconds)
+  const saveToLocalStorage = useCallback(() => {
+    if (!session?.user?.name || !autoSaveEnabled) return;
+
+    const draftData = {
+      predictions,
+      playoffsPredictions,
+      finalsPredictions,
+      bonusAnswers,
+      timestamp: new Date().toISOString()
+    };
+
+    localStorage.setItem(
+      `draft_${session.user.name}`,
+      JSON.stringify(draftData)
+    );
+    setLastSaved(new Date());
+  }, [predictions, playoffsPredictions, finalsPredictions, bonusAnswers, session, autoSaveEnabled]);
+
+  // Trigger auto-save on pick changes (with debounce)
+  useEffect(() => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(() => {
+      saveToLocalStorage();
+    }, 30000); // 30 second debounce
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [predictions, playoffsPredictions, finalsPredictions, bonusAnswers, saveToLocalStorage]);
+
+  // Restore from localStorage on mount
+  useEffect(() => {
+    if (!session?.user?.name) return;
+
+    const savedDraft = localStorage.getItem(`draft_${session.user.name}`);
+    if (savedDraft) {
+      try {
+        const {
+          predictions: p,
+          playoffsPredictions: pp,
+          finalsPredictions: fp,
+          bonusAnswers: ba,
+          timestamp
+        } = JSON.parse(savedDraft);
+
+        // Only restore if no server data exists
+        if (Object.keys(predictions).length === 0 && p) {
+          setPredictions(p || {});
+          setPlayoffsPredictions(pp || {});
+          setFinalsPredictions(fp || {});
+          setBonusAnswers(ba || {});
+          if (timestamp) {
+            setLastSaved(new Date(timestamp));
+          }
+        }
+      } catch (error) {
+        console.error("Error restoring draft from localStorage:", error);
+      }
+    }
   }, [session]);
 
   // Determine current phase based on active tab
@@ -309,6 +418,51 @@ const BracketSubmission = () => {
     setTabValue(newValue);
   };
 
+  // Save draft handler
+  const handleSaveDraft = async (phase: 'group-stage' | 'super8' | 'finals') => {
+    if (!session?.user?.name) return;
+
+    setIsSubmitting(true);
+
+    try {
+      let endpoint = '';
+      let payload: any = { name: session.user.name, isDraft: true };
+
+      if (phase === 'group-stage') {
+        endpoint = '/api/submit-bracket';
+        payload.picks = predictions;
+        payload.bonusAnswers = bonusAnswers;
+      } else if (phase === 'super8') {
+        endpoint = '/api/submit-playoffs';
+        payload.picks = playoffsPredictions;
+      } else if (phase === 'finals') {
+        endpoint = '/api/submit-finals';
+        payload.picks = finalsPredictions;
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        const statusKey = phase === 'group-stage' ? 'groupStage' : phase === 'super8' ? 'super8' : 'finals';
+        setSubmissionStatus(prev => ({ ...prev, [statusKey]: 'DRAFT' }));
+        setLastSaved(new Date());
+        showSnackbar('Draft saved successfully!', 'success');
+      } else {
+        throw new Error('Failed to save draft');
+      }
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      showSnackbar('Error saving draft', 'error');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Submission functions for each bracket type
   const doSubmit = async (hasEmptyBonusQuestions = false) => {
     setIsSubmitting(true);
@@ -321,12 +475,20 @@ const BracketSubmission = () => {
           name: session?.user?.name,
           picks: predictions,
           bonusAnswers: bonusAnswers,
+          isDraft: false,
         }),
       });
       if (response.ok) {
         showSnackbar("Your bracket has been submitted successfully!", "success");
         setAlreadySubmitted(true);
-        
+        setSubmissionStatus(prev => ({ ...prev, groupStage: 'SUBMITTED' }));
+
+        // Clear draft from localStorage after successful final submission
+        if (session?.user?.name) {
+          localStorage.removeItem(`draft_${session.user.name}`);
+          setAutoSaveEnabled(false);
+        }
+
         // Show bonus reminder as a separate message immediately if needed
         if (hasEmptyBonusQuestions) {
           showSnackbar("Remember to make your bonus picks. You can select/update them until the deadline.", "warning");
@@ -351,10 +513,18 @@ const BracketSubmission = () => {
         body: JSON.stringify({
           name: session?.user?.name,
           picks: playoffsPredictions,
+          isDraft: false,
         }),
       });
       if (response.ok) {
         showSnackbar("Your playoffs bracket has been submitted successfully!", "success");
+        setSubmissionStatus(prev => ({ ...prev, super8: 'SUBMITTED' }));
+
+        // Clear draft from localStorage after successful final submission
+        if (session?.user?.name) {
+          localStorage.removeItem(`draft_${session.user.name}`);
+          setAutoSaveEnabled(false);
+        }
       } else {
         showSnackbar("Failed to submit your playoffs bracket. Please try again.", "error");
       }
@@ -375,10 +545,18 @@ const BracketSubmission = () => {
         body: JSON.stringify({
           name: session?.user?.name,
           picks: finalsPredictions,
+          isDraft: false,
         }),
       });
       if (response.ok) {
         showSnackbar("Your finals bracket has been submitted successfully!", "success");
+        setSubmissionStatus(prev => ({ ...prev, finals: 'SUBMITTED' }));
+
+        // Clear draft from localStorage after successful final submission
+        if (session?.user?.name) {
+          localStorage.removeItem(`draft_${session.user.name}`);
+          setAutoSaveEnabled(false);
+        }
       } else {
         showSnackbar("Failed to submit your finals bracket. Please try again.", "error");
       }
@@ -691,15 +869,15 @@ const BracketSubmission = () => {
   };
 
   return (
-    <Container 
-      maxWidth="sm" 
-      disableGutters 
-      sx={{ 
+    <Container
+      maxWidth="sm"
+      disableGutters
+      sx={{
         pt: '10px',
         px: { xs: 0.5, sm: 3 },
         width: '100%',
         maxWidth: { xs: '100vw', sm: '600px' },
-        overflow: 'hidden',
+        overflowX: 'hidden', // Only hide horizontal overflow to prevent sticky issues
         position: 'relative',
         boxSizing: 'border-box'
       }}
@@ -836,6 +1014,72 @@ const BracketSubmission = () => {
 
       {/* Group Stage Tab */}
       <TabPanel value={tabValue} index={0}>
+        {/* Draft Status Banner */}
+        {submissionStatus.groupStage === 'DRAFT' && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            You have an incomplete draft. Complete all picks and submit before deadline.
+            {lastSaved && (
+              <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                Last saved: {lastSaved.toLocaleString()}
+              </Typography>
+            )}
+          </Alert>
+        )}
+
+        {submissionStatus.groupStage === 'SUBMITTED' && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            Your bracket has been submitted! You can still update it before the deadline.
+          </Alert>
+        )}
+
+        {/* Progress Indicator - Fixed at top */}
+        {!isGroupStagePastDeadline && (
+          <Box
+            sx={{
+              position: 'fixed',
+              top: { xs: 104, sm: 112 }, // Below app bar + deadline counter
+              left: 0,
+              right: 0,
+              zIndex: 1000,
+              bgcolor: 'background.paper',
+              py: 1,
+              px: { xs: 2, sm: 3 },
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              backdropFilter: 'blur(10px)',
+              backgroundColor: theme.palette.mode === 'dark'
+                ? 'rgba(30, 30, 30, 0.95)'
+                : 'rgba(255, 255, 255, 0.95)',
+            }}
+          >
+            <Box sx={{ maxWidth: 'sm', mx: 'auto' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
+                  Progress: {Object.keys(predictions).length} of {fixtures.length} picks
+                </Typography>
+                <Typography variant="caption" color="text.secondary" fontWeight="bold">
+                  {Math.round((Object.keys(predictions).length / fixtures.length) * 100)}%
+                </Typography>
+              </Box>
+              <Box sx={{ width: '100%', height: { xs: 6, sm: 8 }, bgcolor: 'action.hover', borderRadius: 1 }}>
+                <Box
+                  sx={{
+                    width: `${(Object.keys(predictions).length / fixtures.length) * 100}%`,
+                    height: '100%',
+                    bgcolor: 'primary.main',
+                    borderRadius: 1,
+                    transition: 'width 0.3s ease-in-out'
+                  }}
+                />
+              </Box>
+            </Box>
+          </Box>
+        )}
+
+        {/* Spacer to prevent content from going under fixed progress bar */}
+        {!isGroupStagePastDeadline && <Box sx={{ height: 68 }} />}
+
         {fixtures.map((fixture) => {
           const matchInfo = getPhaseForMatch(fixture.match) || {
             name: 'Match',
@@ -1102,6 +1346,72 @@ const BracketSubmission = () => {
 
       {/* Super 4 Tab */}
       {showSuper4Tab && <TabPanel value={tabValue} index={2}>
+        {/* Draft Status Banner */}
+        {submissionStatus.super8 === 'DRAFT' && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            You have an incomplete draft. Complete all picks and submit before deadline.
+            {lastSaved && (
+              <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                Last saved: {lastSaved.toLocaleString()}
+              </Typography>
+            )}
+          </Alert>
+        )}
+
+        {submissionStatus.super8 === 'SUBMITTED' && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            Your Super 4 bracket has been submitted! You can still update it before the deadline.
+          </Alert>
+        )}
+
+        {/* Progress Indicator - Fixed at top */}
+        {!isPlayoffsPastDeadline && (
+          <Box
+            sx={{
+              position: 'fixed',
+              top: { xs: 104, sm: 112 }, // Below app bar + deadline counter
+              left: 0,
+              right: 0,
+              zIndex: 1000,
+              bgcolor: 'background.paper',
+              py: 1,
+              px: { xs: 2, sm: 3 },
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              backdropFilter: 'blur(10px)',
+              backgroundColor: theme.palette.mode === 'dark'
+                ? 'rgba(30, 30, 30, 0.95)'
+                : 'rgba(255, 255, 255, 0.95)',
+            }}
+          >
+            <Box sx={{ maxWidth: 'sm', mx: 'auto' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
+                  Progress: {Object.keys(playoffsPredictions).length} of {playoffsFixtures.length} picks
+                </Typography>
+                <Typography variant="caption" color="text.secondary" fontWeight="bold">
+                  {Math.round((Object.keys(playoffsPredictions).length / playoffsFixtures.length) * 100)}%
+                </Typography>
+              </Box>
+              <Box sx={{ width: '100%', height: { xs: 6, sm: 8 }, bgcolor: 'action.hover', borderRadius: 1 }}>
+                <Box
+                  sx={{
+                    width: `${(Object.keys(playoffsPredictions).length / playoffsFixtures.length) * 100}%`,
+                    height: '100%',
+                    bgcolor: 'primary.main',
+                    borderRadius: 1,
+                    transition: 'width 0.3s ease-in-out'
+                  }}
+                />
+              </Box>
+            </Box>
+          </Box>
+        )}
+
+        {/* Spacer to prevent content from going under fixed progress bar */}
+        {!isPlayoffsPastDeadline && <Box sx={{ height: 68 }} />}
+
         {playoffsFixtures.map((fixture) => {
           const matchInfo = getPhaseForMatch(fixture.match) || {
             name: 'Match',
@@ -1332,6 +1642,72 @@ const BracketSubmission = () => {
 
       {/* Finals Tab */}
       {showFinalsTab && <TabPanel value={tabValue} index={3}>
+        {/* Draft Status Banner */}
+        {submissionStatus.finals === 'DRAFT' && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            You have an incomplete draft. Complete all picks and submit before deadline.
+            {lastSaved && (
+              <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                Last saved: {lastSaved.toLocaleString()}
+              </Typography>
+            )}
+          </Alert>
+        )}
+
+        {submissionStatus.finals === 'SUBMITTED' && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            Your finals bracket has been submitted! You can still update it before the deadline.
+          </Alert>
+        )}
+
+        {/* Progress Indicator - Fixed at top */}
+        {!isFinalsPastDeadline && finalsFixtures.length > 0 && (
+          <Box
+            sx={{
+              position: 'fixed',
+              top: { xs: 104, sm: 112 }, // Below app bar + deadline counter
+              left: 0,
+              right: 0,
+              zIndex: 1000,
+              bgcolor: 'background.paper',
+              py: 1,
+              px: { xs: 2, sm: 3 },
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              backdropFilter: 'blur(10px)',
+              backgroundColor: theme.palette.mode === 'dark'
+                ? 'rgba(30, 30, 30, 0.95)'
+                : 'rgba(255, 255, 255, 0.95)',
+            }}
+          >
+            <Box sx={{ maxWidth: 'sm', mx: 'auto' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
+                  Progress: {Object.keys(finalsPredictions).length} of {finalsFixtures.length} picks
+                </Typography>
+                <Typography variant="caption" color="text.secondary" fontWeight="bold">
+                  {Math.round((Object.keys(finalsPredictions).length / finalsFixtures.length) * 100)}%
+                </Typography>
+              </Box>
+              <Box sx={{ width: '100%', height: { xs: 6, sm: 8 }, bgcolor: 'action.hover', borderRadius: 1 }}>
+                <Box
+                  sx={{
+                    width: `${(Object.keys(finalsPredictions).length / finalsFixtures.length) * 100}%`,
+                    height: '100%',
+                    bgcolor: 'primary.main',
+                    borderRadius: 1,
+                    transition: 'width 0.3s ease-in-out'
+                  }}
+                />
+              </Box>
+            </Box>
+          </Box>
+        )}
+
+        {/* Spacer to prevent content from going under fixed progress bar */}
+        {!isFinalsPastDeadline && finalsFixtures.length > 0 && <Box sx={{ height: 68 }} />}
+
         {(!finalsFixtures[0].team1 || !finalsFixtures[0].team2) ? (
           <Typography variant="body1">Finals are not available yet.</Typography>
         ) : (
@@ -1389,6 +1765,67 @@ const BracketSubmission = () => {
           ))
         )}
       </TabPanel>}
+
+      {/* Save Draft Button - only show if not submitted */}
+      {((tabValue === 0 || tabValue === 1) && submissionStatus.groupStage !== 'SUBMITTED' && !isGroupStagePastDeadline) && (
+        <Tooltip title="Save incomplete picks">
+          <Fab
+            variant="extended"
+            color="secondary"
+            onClick={() => handleSaveDraft('group-stage')}
+            disabled={isSubmitting}
+            sx={{
+              position: 'fixed',
+              bottom: 90,
+              right: 16,
+              zIndex: 1000,
+            }}
+          >
+            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : <SaveIcon sx={{ mr: 1 }} />}
+            Save Draft
+          </Fab>
+        </Tooltip>
+      )}
+
+      {(tabValue === 2 && submissionStatus.super8 !== 'SUBMITTED' && !isPlayoffsPastDeadline) && (
+        <Tooltip title="Save incomplete picks">
+          <Fab
+            variant="extended"
+            color="secondary"
+            onClick={() => handleSaveDraft('super8')}
+            disabled={isSubmitting}
+            sx={{
+              position: 'fixed',
+              bottom: 90,
+              right: 16,
+              zIndex: 1000,
+            }}
+          >
+            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : <SaveIcon sx={{ mr: 1 }} />}
+            Save Draft
+          </Fab>
+        </Tooltip>
+      )}
+
+      {((showFinalsTab && tabValue === (showSemifinalsTab ? 4 : 3)) && submissionStatus.finals !== 'SUBMITTED' && !isFinalsPastDeadline) && (
+        <Tooltip title="Save incomplete picks">
+          <Fab
+            variant="extended"
+            color="secondary"
+            onClick={() => handleSaveDraft('finals')}
+            disabled={isSubmitting}
+            sx={{
+              position: 'fixed',
+              bottom: 90,
+              right: 16,
+              zIndex: 1000,
+            }}
+          >
+            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : <SaveIcon sx={{ mr: 1 }} />}
+            Save Draft
+          </Fab>
+        </Tooltip>
+      )}
 
       <Fab
         variant="extended"

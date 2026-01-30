@@ -44,8 +44,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Unauthorized - No session found' });
   }
 
-  // Updated: Accept an optional flag isWildcard.
-  const { name, picks, bonusAnswers, isWildcard } = req.body;
+  // Updated: Accept an optional flag isWildcard and isDraft.
+  const { name, picks, bonusAnswers, isWildcard, isDraft = false } = req.body;
   if (
     !name ||
     typeof name !== 'string' ||
@@ -87,8 +87,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Step 2: If user doesn't have a column, add one (new submission)
     if (userColumnIndex === -1) {
-      eventType = 'BRACKET_SUBMITTED';
-      eventDetails = 'submitted their bracket';
+      eventType = isDraft ? 'BRACKET_DRAFT_SAVED' : 'BRACKET_SUBMITTED';
+      eventDetails = isDraft ? 'saved their bracket draft' : 'submitted their bracket';
       userColumnIndex = headers.length;
       headers.push(name);
 
@@ -101,8 +101,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     } else {
       // If the user's column already exists, it's an update.
-      eventType = 'BRACKET_UPDATED';
-      eventDetails = 'updated their bracket';
+      eventType = isDraft ? 'BRACKET_DRAFT_SAVED' : 'BRACKET_UPDATED';
+      eventDetails = isDraft ? 'saved their bracket draft' : 'updated their bracket';
     }
 
     // Step 3: Prepare data to update each row with their picks
@@ -121,14 +121,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       requestBody: { values: updatedData },
     });
 
-    // Step 5: Append a row to "Links" tab with player's name & EST timestamp
+    // Step 5: Append a row to "Links" tab with player's name, EST timestamp, and status
     if(!isWildcard) {
+      const status = isDraft ? 'DRAFT' : 'SUBMITTED';
       await sheets.spreadsheets.values.append({
         spreadsheetId: process.env.GOOGLE_SHEET_ID!,
-        range: 'Links!A:B',
+        range: 'Links!A:C',
         valueInputOption: 'RAW',
         requestBody: {
-          values: [[name, timestampEST]], // Player Name, Timestamp
+          values: [[name, timestampEST, status]], // Player Name, Timestamp, Status
         },
       });
     }

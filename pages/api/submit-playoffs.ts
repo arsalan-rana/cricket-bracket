@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Unauthorized - No session found' });
   }
 
-  const { name, picks } = req.body;
+  const { name, picks, isDraft = false } = req.body;
   if (!name || typeof name !== 'string' || !picks || typeof picks !== 'object') {
     return res.status(400).json({ error: 'Invalid request data' });
   }
@@ -74,8 +74,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Step 2: If user doesn't have a column, add one (new submission)
     if (userColumnIndex === -1) {
-      eventType = 'SUPER4_SUBMITTED';
-      eventDetails = 'submitted their Super 4 picks';
+      eventType = isDraft ? 'SUPER4_DRAFT_SAVED' : 'SUPER4_SUBMITTED';
+      eventDetails = isDraft ? 'saved their Super 4 draft' : 'submitted their Super 4 picks';
       userColumnIndex = headers.length;
       headers.push(name);
       await sheets.spreadsheets.values.update({
@@ -86,8 +86,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     } else {
       // Existing column – update submission
-      eventType = 'SUPER4_UPDATED';
-      eventDetails = 'updated their Super 4 picks';
+      eventType = isDraft ? 'SUPER4_DRAFT_SAVED' : 'SUPER4_UPDATED';
+      eventDetails = isDraft ? 'saved their Super 4 draft' : 'updated their Super 4 picks';
     }
 
     // Step 3: Update each row with the user's picks.
@@ -110,7 +110,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       requestBody: { values: updatedData },
     });
 
-    // Step 5: Log the activity
+    // Step 5: Append a row to "Links" tab with player's name, EST timestamp, and status
+    const status = isDraft ? 'DRAFT' : 'SUBMITTED';
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: process.env.GOOGLE_SHEET_ID!,
+      range: 'Links!A:C',
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [[name, timestampEST, status]], // Player Name, Timestamp, Status
+      },
+    });
+
+    // Step 6: Log the activity
     await logActivity(
       sheets,
       process.env.GOOGLE_SHEET_ID!,
