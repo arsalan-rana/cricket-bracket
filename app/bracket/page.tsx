@@ -713,30 +713,26 @@ const BracketSubmission = () => {
         </Typography>
       </Box>
 
-      {/* --- CHIP ACTIVATION UI --- */}
-      {tabValue !== 3 && (
+      {/* --- CHIP ACTIVATION UI --- Only for group-stage and super4 */}
+      {(currentPhase === 'group-stage' || currentPhase === 'super4') && (
         <Box textAlign="center" my={4}>
           <Typography variant="h5" gutterBottom>
             Activate a Chip
           </Typography>
           <Box display="flex" justifyContent="center" gap={2}>
-            {/* DoubleUp only available for group-stage and super4 */}
-            {(currentPhase === 'group-stage' || currentPhase === 'super4') && (
-              <IconButton
-                onClick={() => handleChipMenuToggle("doubleUp")}
-                disabled={currentPhaseChips.doubleUp !== null}
-                size="large"
-                sx={{
-                  backgroundColor: 'grey.200',
-                  '&:hover': { backgroundColor: 'grey.300' },
-                  borderRadius: '50%',
-                  p: 1.5,
-                }}
-              >
-                <LooksTwoIcon color={currentPhaseChips.doubleUp !== null ? "disabled" : "primary"} />
-              </IconButton>
-            )}
-            {/* Wildcard available for all phases */}
+            <IconButton
+              onClick={() => handleChipMenuToggle("doubleUp")}
+              disabled={currentPhaseChips.doubleUp !== null}
+              size="large"
+              sx={{
+                backgroundColor: 'grey.200',
+                '&:hover': { backgroundColor: 'grey.300' },
+                borderRadius: '50%',
+                p: 1.5,
+              }}
+            >
+              <LooksTwoIcon color={currentPhaseChips.doubleUp !== null ? "disabled" : "primary"} />
+            </IconButton>
             <IconButton
               onClick={() => handleChipMenuToggle("wildcard")}
               disabled={currentPhaseChips.wildcard !== null}
@@ -803,8 +799,8 @@ const BracketSubmission = () => {
         </Box>
       )}
 
-      {/* --- CONFIRM CHIP ACTIVATION DIALOG --- */}
-      {tabValue !== 3 && (
+      {/* --- CONFIRM CHIP ACTIVATION DIALOG --- Only for group-stage and super4 */}
+      {(currentPhase === 'group-stage' || currentPhase === 'super4') && (
         <Dialog open={confirmDialogOpen} onClose={handleConfirmCancel}>
         <DialogTitle>Confirm Chip Activation</DialogTitle>
         <DialogContent>

@@ -30,10 +30,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const sheets = google.sheets({ version: 'v4', auth });
     const spreadsheetId = process.env.GOOGLE_SHEET_ID!;
 
-    // Fetch the Chips tab (columns A:G - DoubleUp only for group & super8, Wildcard for all)
+    // Fetch the Chips tab (columns A:E - chips only for group-stage and super8)
     const chipRes = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Chips!A:G',
+      range: 'Chips!A:E',
     });
     const rows = chipRes.data.values || [];
 
@@ -77,12 +77,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         wildcard: parseChipValue(userRow[4])
       },
       semifinals: {
-        doubleUp: null, // No DoubleUp for semifinals
-        wildcard: parseChipValue(userRow[5])
+        doubleUp: null, // No chips for semifinals
+        wildcard: null
       },
       finals: {
-        doubleUp: null, // No DoubleUp for finals
-        wildcard: parseChipValue(userRow[6])
+        doubleUp: null, // No chips for finals
+        wildcard: null
       }
     });
   } catch (error) {

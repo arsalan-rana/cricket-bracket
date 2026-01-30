@@ -50,10 +50,8 @@ The "Chips" sheet now needs these columns:
 | C | Wildcard_GroupStage | Match number for group stage wildcard |
 | D | DoubleUp_Super8 | Match number for Super 8 double up |
 | E | Wildcard_Super8 | Match number for Super 8 wildcard |
-| F | Wildcard_Semifinals | Match number for semi-finals wildcard |
-| G | Wildcard_Finals | Match number for final wildcard |
 
-**Note:** DoubleUp chips are only available for Group Stage and Super 8. Wildcards are available for all phases.
+**Note:** Chips (both DoubleUp and Wildcard) are only available for Group Stage and Super 8. No chips for Semi-Finals or Final.
 
 **API Changes:**
 

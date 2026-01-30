@@ -40,23 +40,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Invalid wildcard chip data' });
   }
 
-  // Determine column indices based on phase
-  // DoubleUp only available for group-stage and super4
-  const phaseColumns: { [key: string]: { doubleUp: number | null; wildcard: number } } = {
+  // Chips only available for group-stage and super4
+  const phaseColumns: { [key: string]: { doubleUp: number; wildcard: number } } = {
     'group-stage': { doubleUp: 1, wildcard: 2 },
     'super4': { doubleUp: 3, wildcard: 4 },
-    'semifinals': { doubleUp: null, wildcard: 5 }, // No DoubleUp
-    'finals': { doubleUp: null, wildcard: 6 }, // No DoubleUp
   };
 
   const columnIndices = phaseColumns[phase];
   if (!columnIndices) {
-    return res.status(400).json({ error: 'Invalid phase specified' });
-  }
-
-  // Validate that DoubleUp is not being used in phases where it's not allowed
-  if (chips.doubleUp !== undefined && columnIndices.doubleUp === null) {
-    return res.status(400).json({ error: 'DoubleUp chip is not available for this phase' });
+    return res.status(400).json({ error: 'Chips are not available for this phase' });
   }
 
   try {
@@ -69,11 +61,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const sheets = google.sheets({ version: 'v4', auth });
     const spreadsheetId = process.env.GOOGLE_SHEET_ID!;
 
-    // Define the range to fetch the entire Chips tab (now with 7 columns).
+    // Define the range to fetch the entire Chips tab (now with 5 columns).
     // Assume header row is in row 1.
     const chipsSheetResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: 'Chips!A1:G1000',
+      range: 'Chips!A1:E1000',
     });
 
     let rows = chipsSheetResponse.data.values || [];
@@ -85,28 +77,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         "DoubleUp_GroupStage",
         "Wildcard_GroupStage",
         "DoubleUp_Super8",
-        "Wildcard_Super8",
-        "Wildcard_Semifinals",
-        "Wildcard_Finals"
+        "Wildcard_Super8"
       ]);
     }
 
     // Assume the header row is row 1.
     const header = rows[0];
     // Ensure our expected header columns are there.
-    if (header.length < 7) {
+    if (header.length < 5) {
       header[0] = "Player";
       header[1] = "DoubleUp_GroupStage";
       header[2] = "Wildcard_GroupStage";
       header[3] = "DoubleUp_Super8";
       header[4] = "Wildcard_Super8";
-      header[5] = "Wildcard_Semifinals";
-      header[6] = "Wildcard_Finals";
       rows[0] = header;
       // Write header row back if needed.
       await sheets.spreadsheets.values.update({
         spreadsheetId,
-        range: 'Chips!A1:G1',
+        range: 'Chips!A1:E1',
         valueInputOption: 'RAW',
         requestBody: { values: [header] },
       });
@@ -127,9 +115,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (playerRowIndex === -1) {
       // No row exists for this player, so append a new row.
-      const newRow = Array(7).fill('');
+      const newRow = Array(5).fill('');
       newRow[0] = name;
-      if (newDoubleUp !== null && columnIndices.doubleUp !== null) {
+      if (newDoubleUp !== null) {
         newRow[columnIndices.doubleUp] = newDoubleUp;
       }
       if (newWildcard !== null) {
@@ -137,7 +125,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       await sheets.spreadsheets.values.append({
         spreadsheetId,
-        range: 'Chips!A:G',
+        range: 'Chips!A:E',
         valueInputOption: 'RAW',
         requestBody: {
           values: [newRow],
@@ -146,19 +134,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } else {
       // Row exists—update it.
       const currentRow = rows[playerRowIndex];
-      // Ensure the row has at least 7 columns.
-      while (currentRow.length < 7) {
+      // Ensure the row has at least 5 columns.
+      while (currentRow.length < 5) {
         currentRow.push('');
       }
       // If a chip value is provided, update that column.
-      if (newDoubleUp !== null && columnIndices.doubleUp !== null) {
+      if (newDoubleUp !== null) {
         currentRow[columnIndices.doubleUp] = newDoubleUp;
       }
       if (newWildcard !== null) {
         currentRow[columnIndices.wildcard] = newWildcard;
       }
       // Prepare the range for this row.
-      const updateRange = `Chips!A${playerRowIndex + 1}:G${playerRowIndex + 1}`;
+      const updateRange = `Chips!A${playerRowIndex + 1}:E${playerRowIndex + 1}`;
       await sheets.spreadsheets.values.update({
         spreadsheetId,
         range: updateRange,
