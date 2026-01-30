@@ -12,91 +12,171 @@ import Brightness2Icon from '@mui/icons-material/Brightness2';
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
-// Define cricket-themed light and dark themes.
+// ICC T20 World Cup 2026 themed light theme
 const lightTheme = createTheme({
   palette: {
     mode: 'light',
-    primary: { 
-      main: '#1B5E20', // Cricket green
-      light: '#4C8C4A',
-      dark: '#003D00',
+    primary: {
+      main: '#10044A', // ICC Navy
+      light: '#1C5D9C', // Lapis Blue
+      dark: '#0A0228',
     },
     secondary: {
-      main: '#FF6F00', // Cricket orange (for accents)
-      light: '#FFA040',
-      dark: '#C43E00',
+      main: '#FF9100', // ICC Orange
+      light: '#FFB74D',
+      dark: '#F57C00',
     },
     success: {
-      main: '#2E7D32', // Win green
+      main: '#02A7D1', // Electric Blue
     },
     warning: {
-      main: '#ED6C02', // Draw/warning orange
+      main: '#FF9100', // ICC Orange
+    },
+    error: {
+      main: '#DA2C5A', // Cerise Pink
     },
     background: {
-      default: '#F8F9FA',
+      default: '#F5F7FA',
       paper: '#FFFFFF',
+    },
+    info: {
+      main: '#02A7D1', // Electric Blue
     },
   },
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
     h4: {
+      fontWeight: 800,
+      letterSpacing: '-0.03em',
+    },
+    h5: {
       fontWeight: 700,
       letterSpacing: '-0.02em',
     },
-    h5: {
-      fontWeight: 600,
-      letterSpacing: '-0.01em',
-    },
     h6: {
-      fontWeight: 600,
+      fontWeight: 700,
     },
     subtitle1: {
-      fontWeight: 500,
+      fontWeight: 600,
+    },
+    button: {
+      fontWeight: 700,
+      textTransform: 'none',
     },
   },
+  shape: {
+    borderRadius: 12,
+  },
+  shadows: [
+    'none',
+    '0px 2px 4px rgba(16, 4, 74, 0.08)',
+    '0px 4px 8px rgba(16, 4, 74, 0.12)',
+    '0px 8px 16px rgba(16, 4, 74, 0.16)',
+    '0px 12px 24px rgba(16, 4, 74, 0.20)',
+    '0px 16px 32px rgba(16, 4, 74, 0.24)',
+    '0px 20px 40px rgba(16, 4, 74, 0.28)',
+    '0px 24px 48px rgba(16, 4, 74, 0.32)',
+    '0px 2px 4px rgba(16, 4, 74, 0.08)',
+    '0px 4px 8px rgba(16, 4, 74, 0.12)',
+    '0px 8px 16px rgba(16, 4, 74, 0.16)',
+    '0px 12px 24px rgba(16, 4, 74, 0.20)',
+    '0px 16px 32px rgba(16, 4, 74, 0.24)',
+    '0px 20px 40px rgba(16, 4, 74, 0.28)',
+    '0px 24px 48px rgba(16, 4, 74, 0.32)',
+    '0px 2px 4px rgba(16, 4, 74, 0.08)',
+    '0px 4px 8px rgba(16, 4, 74, 0.12)',
+    '0px 8px 16px rgba(16, 4, 74, 0.16)',
+    '0px 12px 24px rgba(16, 4, 74, 0.20)',
+    '0px 16px 32px rgba(16, 4, 74, 0.24)',
+    '0px 20px 40px rgba(16, 4, 74, 0.28)',
+    '0px 24px 48px rgba(16, 4, 74, 0.32)',
+    '0px 2px 4px rgba(16, 4, 74, 0.08)',
+    '0px 4px 8px rgba(16, 4, 74, 0.12)',
+    '0px 8px 16px rgba(16, 4, 74, 0.16)',
+  ],
 });
 
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',
-    primary: { 
-      main: '#4CAF50', // Brighter cricket green for dark mode
-      light: '#81C784',
-      dark: '#2E7D32',
+    primary: {
+      main: '#1C5D9C', // Lapis Blue for dark mode
+      light: '#02A7D1',
+      dark: '#10044A',
     },
     secondary: {
-      main: '#FF9800', // Orange accent for dark mode
+      main: '#FF9100', // ICC Orange
       light: '#FFB74D',
       dark: '#F57C00',
     },
     success: {
-      main: '#4CAF50',
+      main: '#02A7D1', // Electric Blue
     },
     warning: {
-      main: '#FF9800',
+      main: '#FF9100',
+    },
+    error: {
+      main: '#DA2C5A', // Cerise Pink
     },
     background: {
-      default: '#121212',
-      paper: '#1E1E1E',
+      default: '#0A0A0A', // Vampire Black
+      paper: '#1A1A2E',
+    },
+    info: {
+      main: '#02A7D1',
     },
   },
   typography: {
     fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
     h4: {
+      fontWeight: 800,
+      letterSpacing: '-0.03em',
+    },
+    h5: {
       fontWeight: 700,
       letterSpacing: '-0.02em',
     },
-    h5: {
-      fontWeight: 600,
-      letterSpacing: '-0.01em',
-    },
     h6: {
-      fontWeight: 600,
+      fontWeight: 700,
     },
     subtitle1: {
-      fontWeight: 500,
+      fontWeight: 600,
+    },
+    button: {
+      fontWeight: 700,
+      textTransform: 'none',
     },
   },
+  shape: {
+    borderRadius: 12,
+  },
+  shadows: [
+    'none',
+    '0px 2px 4px rgba(2, 167, 209, 0.08)',
+    '0px 4px 8px rgba(2, 167, 209, 0.12)',
+    '0px 8px 16px rgba(2, 167, 209, 0.16)',
+    '0px 12px 24px rgba(2, 167, 209, 0.20)',
+    '0px 16px 32px rgba(2, 167, 209, 0.24)',
+    '0px 20px 40px rgba(2, 167, 209, 0.28)',
+    '0px 24px 48px rgba(2, 167, 209, 0.32)',
+    '0px 2px 4px rgba(2, 167, 209, 0.08)',
+    '0px 4px 8px rgba(2, 167, 209, 0.12)',
+    '0px 8px 16px rgba(2, 167, 209, 0.16)',
+    '0px 12px 24px rgba(2, 167, 209, 0.20)',
+    '0px 16px 32px rgba(2, 167, 209, 0.24)',
+    '0px 20px 40px rgba(2, 167, 209, 0.28)',
+    '0px 24px 48px rgba(2, 167, 209, 0.32)',
+    '0px 2px 4px rgba(2, 167, 209, 0.08)',
+    '0px 4px 8px rgba(2, 167, 209, 0.12)',
+    '0px 8px 16px rgba(2, 167, 209, 0.16)',
+    '0px 12px 24px rgba(2, 167, 209, 0.20)',
+    '0px 16px 32px rgba(2, 167, 209, 0.24)',
+    '0px 20px 40px rgba(2, 167, 209, 0.28)',
+    '0px 24px 48px rgba(2, 167, 209, 0.32)',
+    '0px 2px 4px rgba(2, 167, 209, 0.08)',
+    '0px 4px 8px rgba(2, 167, 209, 0.12)',
+    '0px 8px 16px rgba(2, 167, 209, 0.16)',
+  ],
 });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

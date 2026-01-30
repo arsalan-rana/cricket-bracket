@@ -52,7 +52,7 @@ const NavBar: React.FC = () => {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        background: 'linear-gradient(180deg, #1B5E20 0%, #2E7D32 100%)',
+        background: 'linear-gradient(180deg, #10044A 0%, #1C5D9C 50%, #10044A 100%)',
         color: 'white',
       }}
       role="presentation"
@@ -60,8 +60,12 @@ const NavBar: React.FC = () => {
       onKeyDown={toggleDrawer(false)}
     >
       <Box>
-        <Box sx={{ p: 3, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: 'white' }}>
+        <Box sx={{ p: 3, borderBottom: '2px solid rgba(255,145,0,0.3)' }}>
+          <Typography variant="h6" sx={{
+            fontWeight: 800,
+            color: 'white',
+            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+          }}>
             🏏 Navigation
           </Typography>
         </Box>
@@ -70,37 +74,49 @@ const NavBar: React.FC = () => {
             const isActive = pathname === item.href;
             return (
               <Link key={item.href} href={item.href} passHref>
-                <ListItem 
-                  button 
+                <ListItem
+                  button
                   component="a"
                   sx={{
                     mx: 2,
                     mb: 1,
-                    borderRadius: 2,
-                    backgroundColor: isActive ? 'rgba(255,255,255,0.15)' : 'transparent',
+                    borderRadius: 3,
+                    backgroundColor: isActive
+                      ? 'linear-gradient(135deg, rgba(255,145,0,0.3) 0%, rgba(2,167,209,0.2) 100%)'
+                      : 'transparent',
+                    border: isActive ? '1px solid rgba(255,145,0,0.5)' : '1px solid transparent',
                     '&:hover': {
-                      backgroundColor: 'rgba(255,255,255,0.1)',
+                      backgroundColor: 'rgba(255,145,0,0.15)',
+                      transform: 'translateX(4px)',
+                      borderColor: 'rgba(255,145,0,0.3)',
                     },
-                    transition: 'all 0.2s ease-in-out',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxShadow: isActive ? '0 4px 12px rgba(255,145,0,0.2)' : 'none',
                   }}
                 >
-                  <Typography sx={{ mr: 2, fontSize: '1.2rem' }}>
+                  <Typography sx={{
+                    mr: 2,
+                    fontSize: '1.3rem',
+                    filter: isActive ? 'drop-shadow(0 2px 4px rgba(255,145,0,0.5))' : 'none',
+                  }}>
                     {item.icon}
                   </Typography>
-                  <ListItemText 
+                  <ListItemText
                     primary={item.label}
                     primaryTypographyProps={{
-                      fontWeight: isActive ? 600 : 400,
+                      fontWeight: isActive ? 700 : 500,
                       color: 'white',
+                      fontSize: '0.95rem',
                     }}
                   />
                   {isActive && (
                     <Box
                       sx={{
-                        width: 4,
-                        height: 20,
-                        backgroundColor: '#FF6F00',
-                        borderRadius: 2,
+                        width: 6,
+                        height: 24,
+                        background: 'linear-gradient(180deg, #FF9100 0%, #02A7D1 100%)',
+                        borderRadius: 3,
+                        boxShadow: '0 2px 8px rgba(255,145,0,0.5)',
                       }}
                     />
                   )}
@@ -113,26 +129,34 @@ const NavBar: React.FC = () => {
       <Box
         sx={{
           padding: 2,
-          borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+          borderTop: '2px solid rgba(255,145,0,0.3)',
         }}
       >
         <List>
           <ListItem
             button
             onClick={() => signOut()}
-            sx={(theme) => ({
-              backgroundColor: theme.palette.error.light,
-              borderRadius: 1,
+            sx={{
+              background: 'linear-gradient(135deg, #DA2C5A 0%, #FF9100 100%)',
+              borderRadius: 3,
+              boxShadow: '0 4px 12px rgba(218,44,90,0.3)',
               '&:hover': {
-                backgroundColor: theme.palette.error.main,
+                background: 'linear-gradient(135deg, #C02050 0%, #E68100 100%)',
+                transform: 'scale(1.02)',
+                boxShadow: '0 6px 16px rgba(218,44,90,0.4)',
               },
-            })}
+              transition: 'all 0.3s ease-in-out',
+            }}
           >
             <ListItemText
               primary="Sign Out"
               primaryTypographyProps={{
                 align: 'center',
-                sx: { fontWeight: 600, color: (theme) => theme.palette.error.contrastText },
+                sx: {
+                  fontWeight: 700,
+                  color: 'white',
+                  textShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                },
               }}
             />
           </ListItem>
@@ -143,29 +167,56 @@ const NavBar: React.FC = () => {
 
   return (
     <>
-      <AppBar position="fixed" sx={{ 
-        background: 'linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%)',
-        boxShadow: '0 4px 20px rgba(27, 94, 32, 0.3)'
+      <AppBar position="fixed" sx={{
+        background: 'linear-gradient(135deg, #10044A 0%, #1C5D9C 50%, #10044A 100%)',
+        boxShadow: '0 4px 24px rgba(16, 4, 74, 0.4)',
+        backdropFilter: 'blur(10px)',
       }}>
-        <Toolbar>
-          <Typography variant="h6" sx={{
+        <Toolbar sx={{ minHeight: { xs: 56, sm: 64 } }}>
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
             flexGrow: 1,
-            textAlign: 'center',
-            fontWeight: 700,
-            letterSpacing: '0.02em',
-            textShadow: '0 1px 2px rgba(0,0,0,0.1)'
+            justifyContent: 'center'
           }}>
-            🏏 {config.name}
-          </Typography>
-          <IconButton 
-            edge="start" 
-            color="inherit" 
-            aria-label="menu" 
+            {/* ICC T20 WC Logo */}
+            <Box
+              component="img"
+              src="https://upload.wikimedia.org/wikipedia/en/thumb/f/fa/2026_ICC_Men%27s_T20_World_Cup_logo.svg/1280px-2026_ICC_Men%27s_T20_World_Cup_logo.svg.png"
+              alt="ICC Logo"
+              sx={{
+                height: { xs: 28, sm: 32 },
+                width: 'auto',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+              }}
+            />
+            <Typography variant="h6" sx={{
+              fontWeight: 800,
+              letterSpacing: '-0.01em',
+              textShadow: '0 2px 8px rgba(0,0,0,0.3)',
+              background: 'linear-gradient(135deg, #FFFFFF 0%, #02A7D1 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              fontSize: { xs: '1rem', sm: '1.25rem' },
+            }}>
+              {config.name}
+            </Typography>
+          </Box>
+          <IconButton
+            edge="end"
+            color="inherit"
+            aria-label="menu"
             onClick={toggleDrawer(true)}
-            sx={{ 
-              '&:hover': { 
-                backgroundColor: 'rgba(255,255,255,0.1)' 
-              } 
+            sx={{
+              backgroundColor: 'rgba(255, 145, 0, 0.1)',
+              border: '1px solid rgba(255, 145, 0, 0.3)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 145, 0, 0.2)',
+                transform: 'scale(1.05)',
+              },
+              transition: 'all 0.2s ease-in-out',
             }}
           >
             <MenuIcon />

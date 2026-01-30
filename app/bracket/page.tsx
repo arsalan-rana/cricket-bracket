@@ -883,10 +883,22 @@ const BracketSubmission = () => {
       }}
     >
       <Box my={4} textAlign="center">
-        <Typography variant="h4" gutterBottom>
-          Your Bracket
+        <Typography variant="h4" gutterBottom sx={{
+          fontWeight: 900,
+          background: 'linear-gradient(135deg, #10044A 0%, #1C5D9C 50%, #FF9100 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          textShadow: '0 4px 12px rgba(16, 4, 74, 0.2)',
+          letterSpacing: '-0.03em',
+        }}>
+          🏏 Your Bracket
         </Typography>
-        <Typography variant="body1" color="textSecondary">
+        <Typography variant="body1" color="text.secondary" sx={{
+          fontSize: '1.1rem',
+          maxWidth: '600px',
+          mx: 'auto',
+        }}>
           Make your selections in the tabs below and then submit your bracket.
         </Typography>
       </Box>
@@ -1098,29 +1110,46 @@ const BracketSubmission = () => {
                 boxSizing: 'border-box'
               }}
             >
-              <Paper sx={{ 
-              p: { xs: 0.8, sm: 3 }, 
+              <Paper sx={{
+              p: { xs: 1.5, sm: 3 },
               mx: { xs: 0, sm: 0 },
-              my: { xs: 1, sm: 3 }, 
-              textAlign: 'center', 
-              borderRadius: { xs: 2, sm: 3 },
-              boxShadow: theme.palette.mode === 'dark' 
-                ? '0 4px 20px rgba(0,0,0,0.3)' 
-                : '0 4px 20px rgba(0,0,0,0.1)',
+              my: { xs: 1.5, sm: 3 },
+              textAlign: 'center',
+              borderRadius: { xs: 3, sm: 4 },
+              boxShadow: theme.palette.mode === 'dark'
+                ? '0 8px 32px rgba(2, 167, 209, 0.2), 0 0 0 1px rgba(255, 145, 0, 0.1)'
+                : '0 8px 32px rgba(16, 4, 74, 0.12), 0 0 0 1px rgba(16, 4, 74, 0.05)',
               background: theme.palette.mode === 'dark'
-                ? 'linear-gradient(135deg, #2A2A2A 0%, #1E1E1E 100%)'
-                : 'linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%)',
-              transition: 'all 0.3s ease-in-out',
+                ? 'linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(16, 4, 74, 0.3) 100%)'
+                : 'linear-gradient(135deg, #FFFFFF 0%, rgba(245, 247, 250, 0.9) 100%)',
+              backdropFilter: 'blur(20px)',
+              border: theme.palette.mode === 'dark'
+                ? '1px solid rgba(255, 145, 0, 0.2)'
+                : '1px solid rgba(16, 4, 74, 0.08)',
+              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
               width: { xs: '100%', sm: 'auto' },
               maxWidth: { xs: '100%', sm: 'none' },
               overflow: 'hidden',
               boxSizing: 'border-box',
               position: 'relative',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '3px',
+                background: 'linear-gradient(90deg, #FF9100 0%, #02A7D1 50%, #DA2C5A 100%)',
+                opacity: 0.7,
+              },
               '&:hover': {
                 boxShadow: theme.palette.mode === 'dark'
-                  ? '0 8px 30px rgba(0,0,0,0.4)'
-                  : '0 8px 30px rgba(0,0,0,0.15)',
-                transform: { xs: 'none', sm: 'translateY(-2px)' },
+                  ? '0 12px 48px rgba(2, 167, 209, 0.3), 0 0 0 2px rgba(255, 145, 0, 0.3)'
+                  : '0 12px 48px rgba(16, 4, 74, 0.2), 0 0 0 2px rgba(255, 145, 0, 0.2)',
+                transform: { xs: 'none', sm: 'translateY(-4px) scale(1.01)' },
+                borderColor: theme.palette.mode === 'dark'
+                  ? 'rgba(255, 145, 0, 0.4)'
+                  : 'rgba(16, 4, 74, 0.15)',
               },
             }}>
               <Box 
@@ -1185,36 +1214,48 @@ const BracketSubmission = () => {
                     disabled={locked}
                     sx={{
                       width: { xs: '100%', sm: 'auto' },
-                      minWidth: { xs: 'auto', sm: 120 },
+                      minWidth: { xs: 'auto', sm: 140 },
                       maxWidth: { xs: '100%', sm: 'none' },
-                      height: { xs: 42, sm: 48 },
-                      borderRadius: { xs: 2, sm: 3 },
-                      fontWeight: 600,
-                      fontSize: { xs: '0.8rem', sm: '1rem' },
-                      px: { xs: 1, sm: 2 },
+                      height: { xs: 48, sm: 56 },
+                      borderRadius: { xs: 6, sm: 8 },
+                      fontWeight: 700,
+                      fontSize: { xs: '0.85rem', sm: '1rem' },
+                      px: { xs: 2, sm: 3 },
                       boxSizing: 'border-box',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
-                      backgroundColor: predictions[fixture.match] === fixture.team1 
+                      position: 'relative',
+                      backgroundColor: predictions[fixture.match] === fixture.team1
                         ? teamColors[fixture.team1]?.primary || theme.palette.primary.main
                         : 'transparent',
                       color: predictions[fixture.match] === fixture.team1
                         ? teamColors[fixture.team1]?.secondary || 'white'
-                        : theme.palette.mode === 'dark' 
+                        : theme.palette.mode === 'dark'
                           ? theme.palette.text.primary
                           : teamColors[fixture.team1]?.primary || theme.palette.primary.main,
                       borderColor: theme.palette.mode === 'dark'
                         ? theme.palette.primary.main
                         : teamColors[fixture.team1]?.primary || theme.palette.primary.main,
-                      borderWidth: 2,
+                      borderWidth: 2.5,
+                      boxShadow: predictions[fixture.match] === fixture.team1
+                        ? `0 6px 20px ${teamColors[fixture.team1]?.primary || theme.palette.primary.main}40`
+                        : 'none',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       '&:hover': {
                         backgroundColor: predictions[fixture.match] === fixture.team1
                           ? teamColors[fixture.team1]?.primary || theme.palette.primary.main
                           : theme.palette.mode === 'dark'
-                            ? `${theme.palette.primary.main}20`
-                            : `${teamColors[fixture.team1]?.primary || theme.palette.primary.main}15`,
-                        borderWidth: 2,
+                            ? `${theme.palette.primary.main}25`
+                            : `${teamColors[fixture.team1]?.primary || theme.palette.primary.main}20`,
+                        borderWidth: 2.5,
+                        transform: 'translateY(-2px) scale(1.02)',
+                        boxShadow: predictions[fixture.match] === fixture.team1
+                          ? `0 10px 30px ${teamColors[fixture.team1]?.primary || theme.palette.primary.main}50`
+                          : `0 6px 20px ${teamColors[fixture.team1]?.primary || theme.palette.primary.main}30`,
+                      },
+                      '&:active': {
+                        transform: 'translateY(0) scale(0.98)',
                       },
                     }}
                   >
@@ -1244,36 +1285,48 @@ const BracketSubmission = () => {
                     disabled={locked}
                     sx={{
                       width: { xs: '100%', sm: 'auto' },
-                      minWidth: { xs: 'auto', sm: 120 },
+                      minWidth: { xs: 'auto', sm: 140 },
                       maxWidth: { xs: '100%', sm: 'none' },
-                      height: { xs: 42, sm: 48 },
-                      borderRadius: { xs: 2, sm: 3 },
-                      fontWeight: 600,
-                      fontSize: { xs: '0.8rem', sm: '1rem' },
-                      px: { xs: 1, sm: 2 },
+                      height: { xs: 48, sm: 56 },
+                      borderRadius: { xs: 6, sm: 8 },
+                      fontWeight: 700,
+                      fontSize: { xs: '0.85rem', sm: '1rem' },
+                      px: { xs: 2, sm: 3 },
                       boxSizing: 'border-box',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
-                      backgroundColor: predictions[fixture.match] === fixture.team2 
+                      position: 'relative',
+                      backgroundColor: predictions[fixture.match] === fixture.team2
                         ? teamColors[fixture.team2]?.primary || theme.palette.primary.main
                         : 'transparent',
                       color: predictions[fixture.match] === fixture.team2
                         ? teamColors[fixture.team2]?.secondary || 'white'
-                        : theme.palette.mode === 'dark' 
+                        : theme.palette.mode === 'dark'
                           ? theme.palette.text.primary
                           : teamColors[fixture.team2]?.primary || theme.palette.primary.main,
                       borderColor: theme.palette.mode === 'dark'
                         ? theme.palette.primary.main
                         : teamColors[fixture.team2]?.primary || theme.palette.primary.main,
-                      borderWidth: 2,
+                      borderWidth: 2.5,
+                      boxShadow: predictions[fixture.match] === fixture.team2
+                        ? `0 6px 20px ${teamColors[fixture.team2]?.primary || theme.palette.primary.main}40`
+                        : 'none',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       '&:hover': {
                         backgroundColor: predictions[fixture.match] === fixture.team2
                           ? teamColors[fixture.team2]?.primary || theme.palette.primary.main
                           : theme.palette.mode === 'dark'
-                            ? `${theme.palette.primary.main}20`
-                            : `${teamColors[fixture.team2]?.primary || theme.palette.primary.main}15`,
-                        borderWidth: 2,
+                            ? `${theme.palette.primary.main}25`
+                            : `${teamColors[fixture.team2]?.primary || theme.palette.primary.main}20`,
+                        borderWidth: 2.5,
+                        transform: 'translateY(-2px) scale(1.02)',
+                        boxShadow: predictions[fixture.match] === fixture.team2
+                          ? `0 10px 30px ${teamColors[fixture.team2]?.primary || theme.palette.primary.main}50`
+                          : `0 6px 20px ${teamColors[fixture.team2]?.primary || theme.palette.primary.main}30`,
+                      },
+                      '&:active': {
+                        transform: 'translateY(0) scale(0.98)',
                       },
                     }}
                   >
@@ -1768,10 +1821,9 @@ const BracketSubmission = () => {
 
       {/* Save Draft Button - only show if not submitted */}
       {((tabValue === 0 || tabValue === 1) && submissionStatus.groupStage !== 'SUBMITTED' && !isGroupStagePastDeadline) && (
-        <Tooltip title="Save incomplete picks">
+        <Tooltip title="Save incomplete picks" arrow>
           <Fab
             variant="extended"
-            color="secondary"
             onClick={() => handleSaveDraft('group-stage')}
             disabled={isSubmitting}
             sx={{
@@ -1779,6 +1831,21 @@ const BracketSubmission = () => {
               bottom: 90,
               right: 16,
               zIndex: 1000,
+              background: 'linear-gradient(135deg, #FF9100 0%, #02A7D1 100%)',
+              color: 'white',
+              fontWeight: 700,
+              px: 3,
+              borderRadius: 6,
+              boxShadow: '0 8px 24px rgba(255, 145, 0, 0.35)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #E68100 0%, #0196C0 100%)',
+                transform: 'translateY(-3px) scale(1.05)',
+                boxShadow: '0 12px 32px rgba(255, 145, 0, 0.45)',
+              },
+              '&:active': {
+                transform: 'translateY(-1px) scale(1.02)',
+              },
             }}
           >
             {isSubmitting ? <CircularProgress size={24} color="inherit" /> : <SaveIcon sx={{ mr: 1 }} />}
@@ -1788,10 +1855,9 @@ const BracketSubmission = () => {
       )}
 
       {(tabValue === 2 && submissionStatus.super8 !== 'SUBMITTED' && !isPlayoffsPastDeadline) && (
-        <Tooltip title="Save incomplete picks">
+        <Tooltip title="Save incomplete picks" arrow>
           <Fab
             variant="extended"
-            color="secondary"
             onClick={() => handleSaveDraft('super8')}
             disabled={isSubmitting}
             sx={{
@@ -1799,6 +1865,21 @@ const BracketSubmission = () => {
               bottom: 90,
               right: 16,
               zIndex: 1000,
+              background: 'linear-gradient(135deg, #FF9100 0%, #02A7D1 100%)',
+              color: 'white',
+              fontWeight: 700,
+              px: 3,
+              borderRadius: 6,
+              boxShadow: '0 8px 24px rgba(255, 145, 0, 0.35)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #E68100 0%, #0196C0 100%)',
+                transform: 'translateY(-3px) scale(1.05)',
+                boxShadow: '0 12px 32px rgba(255, 145, 0, 0.45)',
+              },
+              '&:active': {
+                transform: 'translateY(-1px) scale(1.02)',
+              },
             }}
           >
             {isSubmitting ? <CircularProgress size={24} color="inherit" /> : <SaveIcon sx={{ mr: 1 }} />}
@@ -1808,10 +1889,9 @@ const BracketSubmission = () => {
       )}
 
       {((showFinalsTab && tabValue === (showSemifinalsTab ? 4 : 3)) && submissionStatus.finals !== 'SUBMITTED' && !isFinalsPastDeadline) && (
-        <Tooltip title="Save incomplete picks">
+        <Tooltip title="Save incomplete picks" arrow>
           <Fab
             variant="extended"
-            color="secondary"
             onClick={() => handleSaveDraft('finals')}
             disabled={isSubmitting}
             sx={{
@@ -1819,6 +1899,21 @@ const BracketSubmission = () => {
               bottom: 90,
               right: 16,
               zIndex: 1000,
+              background: 'linear-gradient(135deg, #FF9100 0%, #02A7D1 100%)',
+              color: 'white',
+              fontWeight: 700,
+              px: 3,
+              borderRadius: 6,
+              boxShadow: '0 8px 24px rgba(255, 145, 0, 0.35)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #E68100 0%, #0196C0 100%)',
+                transform: 'translateY(-3px) scale(1.05)',
+                boxShadow: '0 12px 32px rgba(255, 145, 0, 0.45)',
+              },
+              '&:active': {
+                transform: 'translateY(-1px) scale(1.02)',
+              },
             }}
           >
             {isSubmitting ? <CircularProgress size={24} color="inherit" /> : <SaveIcon sx={{ mr: 1 }} />}
@@ -1829,7 +1924,6 @@ const BracketSubmission = () => {
 
       <Fab
         variant="extended"
-        color="primary"
         onClick={handleSubmit}
         disabled={isSubmitting || (locked && (tabValue === 0 || tabValue === 1))}
         sx={{
@@ -1837,10 +1931,30 @@ const BracketSubmission = () => {
           bottom: 16,
           right: 16,
           zIndex: 1000,
-          backgroundColor: '#90A4AE',
+          background: 'linear-gradient(135deg, #10044A 0%, #1C5D9C 50%, #DA2C5A 100%)',
           color: '#ffffff',
-          '&:hover': { backgroundColor: '#607D8B' },
-          '&:disabled': { backgroundColor: '#B0BEC5', color: '#ECEFF1' },
+          fontWeight: 700,
+          px: 4,
+          py: 1.5,
+          borderRadius: 6,
+          boxShadow: '0 12px 32px rgba(16, 4, 74, 0.4)',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          border: '2px solid rgba(255, 145, 0, 0.3)',
+          '&:hover': {
+            background: 'linear-gradient(135deg, #0A0228 0%, #133A75 50%, #C02050 100%)',
+            transform: 'translateY(-4px) scale(1.05)',
+            boxShadow: '0 16px 40px rgba(16, 4, 74, 0.5), 0 0 20px rgba(255, 145, 0, 0.3)',
+            borderColor: 'rgba(255, 145, 0, 0.6)',
+          },
+          '&:active': {
+            transform: 'translateY(-2px) scale(1.02)',
+          },
+          '&:disabled': {
+            background: 'linear-gradient(135deg, #B0BEC5 0%, #90A4AE 100%)',
+            color: '#ECEFF1',
+            boxShadow: 'none',
+            borderColor: 'transparent',
+          },
         }}
       >
         {isSubmitting ? <CircularProgress size={24} color="inherit" /> : <SendIcon sx={{ mr: 1 }} />}
