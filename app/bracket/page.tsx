@@ -35,6 +35,7 @@ import LooksTwoIcon from '@mui/icons-material/LooksTwo';
 import ShuffleIcon from '@mui/icons-material/Shuffle';
 import SendIcon from '@mui/icons-material/Send';
 import SaveIcon from '@mui/icons-material/Save';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { DateTime } from 'luxon';
 import { useTheme } from '@mui/material/styles';
 
@@ -169,6 +170,10 @@ const BracketSubmission = () => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(true);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // AI Predictions dialog state
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
+  const [aiDialogMode, setAiDialogMode] = useState<'replace' | 'fillEmpty'>('fillEmpty');
 
   // Get phase names from config
   const super4Phase = config.phases.find((p) => p.id === 'super4');
@@ -461,6 +466,72 @@ const BracketSubmission = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // AI Predictions handlers
+  const handleOpenAiDialog = () => {
+    setAiDialogOpen(true);
+  };
+
+  const handleCloseAiDialog = () => {
+    setAiDialogOpen(false);
+  };
+
+  const handleApplyAiPredictions = () => {
+    if (!config.features.aiPredictionsEnabled) {
+      showSnackbar('AI predictions are not enabled for this tournament', 'error');
+      return;
+    }
+
+    const aiFixtures = fixtures.filter(f => f.aiPrediction);
+    if (aiFixtures.length === 0) {
+      showSnackbar('No AI predictions available', 'error');
+      return;
+    }
+
+    const newPredictions = { ...predictions };
+    let appliedCount = 0;
+
+    aiFixtures.forEach(fixture => {
+      if (aiDialogMode === 'replace' || !newPredictions[fixture.match]) {
+        if (fixture.aiPrediction) {
+          newPredictions[fixture.match] = fixture.aiPrediction;
+          appliedCount++;
+        }
+      }
+    });
+
+    setPredictions(newPredictions);
+    setAiDialogOpen(false);
+
+    const mode = aiDialogMode === 'replace' ? 'replaced' : 'filled';
+    showSnackbar(`AI predictions applied! ${appliedCount} picks ${mode}.`, 'success');
+  };
+
+  const handleApplyBonusAiPredictions = () => {
+    if (!config.features.bonusQuestionsEnabled) {
+      showSnackbar('Bonus questions are not enabled for this tournament', 'error');
+      return;
+    }
+
+    const newBonusAnswers = { ...bonusAnswers };
+    let appliedCount = 0;
+
+    bonusQuestions.forEach(question => {
+      const prediction = bonusPredictions[question];
+      if (prediction) {
+        if (aiDialogMode === 'replace' || !newBonusAnswers[question] || newBonusAnswers[question].trim() === '') {
+          newBonusAnswers[question] = prediction;
+          appliedCount++;
+        }
+      }
+    });
+
+    setBonusAnswers(newBonusAnswers);
+    setAiDialogOpen(false);
+
+    const mode = aiDialogMode === 'replace' ? 'replaced' : 'filled';
+    showSnackbar(`AI predictions applied! ${appliedCount} bonus picks ${mode}.`, 'success');
   };
 
   // Submission functions for each bracket type
@@ -1013,6 +1084,92 @@ const BracketSubmission = () => {
         </Dialog>
       )}
 
+      {/* --- AI PREDICTIONS DIALOG --- */}
+      <Dialog open={aiDialogOpen} onClose={handleCloseAiDialog} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          background: 'linear-gradient(135deg, #FF9100 0%, #02A7D1 100%)',
+          color: 'white',
+          fontWeight: 700,
+        }}>
+          <AutoAwesomeIcon />
+          Use AI Predictions
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <DialogContentText sx={{ mb: 3 }}>
+            {tabValue === 0 ? (
+              <>AI predictions are available for {fixtures.filter(f => f.aiPrediction).length} out of {fixtures.length} matches.</>
+            ) : (
+              <>AI predictions are available for {bonusQuestions.filter(q => bonusPredictions[q]).length} out of {bonusQuestions.length} bonus questions.</>
+            )}
+            {' '}How would you like to apply them?
+          </DialogContentText>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Button
+              variant={aiDialogMode === 'fillEmpty' ? 'contained' : 'outlined'}
+              onClick={() => setAiDialogMode('fillEmpty')}
+              sx={{
+                py: 1.5,
+                justifyContent: 'flex-start',
+                textAlign: 'left',
+                borderRadius: 2,
+              }}
+            >
+              <Box>
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Fill Empty Only (Recommended)
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {tabValue === 0
+                    ? "Apply AI predictions only to matches you haven't picked yet"
+                    : "Apply AI predictions only to questions you haven't answered yet"
+                  }
+                </Typography>
+              </Box>
+            </Button>
+            <Button
+              variant={aiDialogMode === 'replace' ? 'contained' : 'outlined'}
+              onClick={() => setAiDialogMode('replace')}
+              sx={{
+                py: 1.5,
+                justifyContent: 'flex-start',
+                textAlign: 'left',
+                borderRadius: 2,
+              }}
+            >
+              <Box>
+                <Typography variant="subtitle1" fontWeight={700}>
+                  Replace All
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Replace all your {tabValue === 0 ? 'picks' : 'answers'} with AI predictions (cannot be undone)
+                </Typography>
+              </Box>
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={handleCloseAiDialog} variant="outlined">
+            Cancel
+          </Button>
+          <Button
+            onClick={tabValue === 0 ? handleApplyAiPredictions : handleApplyBonusAiPredictions}
+            variant="contained"
+            startIcon={<AutoAwesomeIcon />}
+            sx={{
+              background: 'linear-gradient(135deg, #FF9100 0%, #02A7D1 100%)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #F57C00 0%, #0288D1 100%)',
+              },
+            }}
+          >
+            Apply Predictions
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* --- TABS FOR BRACKET SUBMISSION --- */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={tabValue} onChange={handleTabChange} aria-label="Bracket Submission Tabs">
@@ -1042,6 +1199,34 @@ const BracketSubmission = () => {
           <Alert severity="success" sx={{ mb: 2 }}>
             Your bracket has been submitted! You can still update it before the deadline.
           </Alert>
+        )}
+
+        {/* AI Predictions Button */}
+        {!isGroupStagePastDeadline && config.features.aiPredictionsEnabled && (
+          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+            <Button
+              variant="contained"
+              onClick={handleOpenAiDialog}
+              startIcon={<AutoAwesomeIcon />}
+              sx={{
+                background: 'linear-gradient(135deg, #FF9100 0%, #02A7D1 100%)',
+                color: 'white',
+                fontWeight: 700,
+                px: 3,
+                py: 1.5,
+                borderRadius: 3,
+                boxShadow: '0 4px 16px rgba(255, 145, 0, 0.4)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #F57C00 0%, #0288D1 100%)',
+                  transform: 'scale(1.02)',
+                  boxShadow: '0 6px 20px rgba(255, 145, 0, 0.5)',
+                },
+                transition: 'all 0.3s ease-in-out',
+              }}
+            >
+              Use AI Predictions
+            </Button>
+          </Box>
         )}
 
         {/* Progress Indicator - Fixed at top */}
@@ -1375,6 +1560,35 @@ const BracketSubmission = () => {
           <Typography variant="h5" gutterBottom>
             Bonus Questions
           </Typography>
+
+          {/* AI Predictions Button for Bonus */}
+          {!isGroupStagePastDeadline && config.features.bonusQuestionsEnabled && (
+            <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
+              <Button
+                variant="contained"
+                onClick={handleOpenAiDialog}
+                startIcon={<AutoAwesomeIcon />}
+                sx={{
+                  background: 'linear-gradient(135deg, #FF9100 0%, #02A7D1 100%)',
+                  color: 'white',
+                  fontWeight: 700,
+                  px: 3,
+                  py: 1.5,
+                  borderRadius: 3,
+                  boxShadow: '0 4px 16px rgba(255, 145, 0, 0.4)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #F57C00 0%, #0288D1 100%)',
+                    transform: 'scale(1.02)',
+                    boxShadow: '0 6px 20px rgba(255, 145, 0, 0.5)',
+                  },
+                  transition: 'all 0.3s ease-in-out',
+                }}
+              >
+                Use AI Predictions
+              </Button>
+            </Box>
+          )}
+
           {bonusQuestions.map((question) => (
             <Box key={question} mb={2}>
               <TextField
