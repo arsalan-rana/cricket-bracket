@@ -60,72 +60,72 @@ export const t20WorldCup2026Config: TournamentConfig = {
     // ============ GROUP STAGE (Matches 1-40) ============
 
     // Day 1 - Feb 7
-    { match: 1, date: '7 February', team1: 'Netherlands', team2: 'Pakistan', venue: 'Colombo (SSC)', phase: 'group-stage' },
-    { match: 2, date: '7 February', team1: 'Scotland', team2: 'West Indies', venue: 'Eden Gardens, Kolkata', phase: 'group-stage' },
-    { match: 3, date: '7 February', team1: 'India', team2: 'USA', venue: 'Wankhede, Mumbai', phase: 'group-stage' },
+    { match: 1, date: '7 February', team1: 'Netherlands', team2: 'Pakistan', venue: 'Colombo (SSC)', aiPrediction: 'Pakistan', phase: 'group-stage' },
+    { match: 2, date: '7 February', team1: 'Scotland', team2: 'West Indies', venue: 'Eden Gardens, Kolkata', aiPrediction: 'West Indies', phase: 'group-stage' },
+    { match: 3, date: '7 February', team1: 'India', team2: 'USA', venue: 'Wankhede, Mumbai', aiPrediction: 'India', phase: 'group-stage' },
 
     // Day 2 - Feb 8
-    { match: 4, date: '8 February', team1: 'Afghanistan', team2: 'New Zealand', venue: 'Chennai', phase: 'group-stage' },
-    { match: 5, date: '8 February', team1: 'England', team2: 'Nepal', venue: 'Wankhede, Mumbai', phase: 'group-stage' },
-    { match: 6, date: '8 February', team1: 'Sri Lanka', team2: 'Ireland', venue: 'Colombo (RPS)', phase: 'group-stage' },
+    { match: 4, date: '8 February', team1: 'Afghanistan', team2: 'New Zealand', venue: 'Chennai', aiPrediction: 'Afghanistan', phase: 'group-stage' },
+    { match: 5, date: '8 February', team1: 'England', team2: 'Nepal', venue: 'Wankhede, Mumbai', aiPrediction: 'England', phase: 'group-stage' },
+    { match: 6, date: '8 February', team1: 'Sri Lanka', team2: 'Ireland', venue: 'Colombo (RPS)', aiPrediction: 'Sri Lanka', phase: 'group-stage' },
 
     // Day 3 - Feb 9
-    { match: 7, date: '9 February', team1: 'Italy', team2: 'Scotland', venue: 'Eden Gardens, Kolkata', phase: 'group-stage' },
-    { match: 8, date: '9 February', team1: 'Oman', team2: 'Zimbabwe', venue: 'Colombo (SSC)', phase: 'group-stage' },
-    { match: 9, date: '9 February', team1: 'Canada', team2: 'South Africa', venue: 'Ahmedabad', phase: 'group-stage' },
+    { match: 7, date: '9 February', team1: 'Italy', team2: 'Scotland', venue: 'Eden Gardens, Kolkata', aiPrediction: 'Scotland', phase: 'group-stage' },
+    { match: 8, date: '9 February', team1: 'Oman', team2: 'Zimbabwe', venue: 'Colombo (SSC)', aiPrediction: 'Zimbabwe', phase: 'group-stage' },
+    { match: 9, date: '9 February', team1: 'Canada', team2: 'South Africa', venue: 'Ahmedabad', aiPrediction: 'South Africa', phase: 'group-stage' },
 
     // Day 4 - Feb 10
-    { match: 10, date: '10 February', team1: 'Namibia', team2: 'Netherlands', venue: 'Delhi', phase: 'group-stage' },
-    { match: 11, date: '10 February', team1: 'New Zealand', team2: 'UAE', venue: 'Chennai', phase: 'group-stage' },
-    { match: 12, date: '10 February', team1: 'Pakistan', team2: 'USA', venue: 'Colombo (SSC)', phase: 'group-stage' },
+    { match: 10, date: '10 February', team1: 'Namibia', team2: 'Netherlands', venue: 'Delhi', aiPrediction: 'Netherlands', phase: 'group-stage' },
+    { match: 11, date: '10 February', team1: 'New Zealand', team2: 'UAE', venue: 'Chennai', aiPrediction: 'New Zealand', phase: 'group-stage' },
+    { match: 12, date: '10 February', team1: 'Pakistan', team2: 'USA', venue: 'Colombo (SSC)', aiPrediction: 'Pakistan', phase: 'group-stage' },
 
     // Day 5 - Feb 11
-    { match: 13, date: '11 February', team1: 'Afghanistan', team2: 'South Africa', venue: 'Ahmedabad', phase: 'group-stage' },
-    { match: 14, date: '11 February', team1: 'Australia', team2: 'Ireland', venue: 'Colombo (RPS)', phase: 'group-stage' },
-    { match: 15, date: '11 February', team1: 'England', team2: 'West Indies', venue: 'Wankhede, Mumbai', phase: 'group-stage' },
+    { match: 13, date: '11 February', team1: 'Afghanistan', team2: 'South Africa', venue: 'Ahmedabad', aiPrediction: 'South Africa', phase: 'group-stage' },
+    { match: 14, date: '11 February', team1: 'Australia', team2: 'Ireland', venue: 'Colombo (RPS)', aiPrediction: 'Australia', phase: 'group-stage' },
+    { match: 15, date: '11 February', team1: 'England', team2: 'West Indies', venue: 'Wankhede, Mumbai', aiPrediction: 'England', phase: 'group-stage' },
 
     // Day 6 - Feb 12
-    { match: 16, date: '12 February', team1: 'Sri Lanka', team2: 'Oman', venue: 'Pallekele', phase: 'group-stage' },
-    { match: 17, date: '12 February', team1: 'Italy', team2: 'Nepal', venue: 'Wankhede, Mumbai', phase: 'group-stage' },
-    { match: 18, date: '12 February', team1: 'India', team2: 'Namibia', venue: 'Delhi', phase: 'group-stage' },
+    { match: 16, date: '12 February', team1: 'Sri Lanka', team2: 'Oman', venue: 'Pallekele', aiPrediction: 'Sri Lanka', phase: 'group-stage' },
+    { match: 17, date: '12 February', team1: 'Italy', team2: 'Nepal', venue: 'Wankhede, Mumbai', aiPrediction: 'Nepal', phase: 'group-stage' },
+    { match: 18, date: '12 February', team1: 'India', team2: 'Namibia', venue: 'Delhi', aiPrediction: 'India', phase: 'group-stage' },
 
     // Day 7 - Feb 13
-    { match: 19, date: '13 February', team1: 'Australia', team2: 'Zimbabwe', venue: 'Colombo (RPS)', phase: 'group-stage' },
-    { match: 20, date: '13 February', team1: 'Canada', team2: 'UAE', venue: 'Delhi', phase: 'group-stage' },
-    { match: 21, date: '13 February', team1: 'Netherlands', team2: 'USA', venue: 'Chennai', phase: 'group-stage' },
+    { match: 19, date: '13 February', team1: 'Australia', team2: 'Zimbabwe', venue: 'Colombo (RPS)', aiPrediction: 'Australia', phase: 'group-stage' },
+    { match: 20, date: '13 February', team1: 'Canada', team2: 'UAE', venue: 'Delhi', aiPrediction: 'Canada', phase: 'group-stage' },
+    { match: 21, date: '13 February', team1: 'Netherlands', team2: 'USA', venue: 'Chennai', aiPrediction: 'Netherlands', phase: 'group-stage' },
 
     // Day 8 - Feb 14
-    { match: 22, date: '14 February', team1: 'Ireland', team2: 'Oman', venue: 'Colombo (SSC)', phase: 'group-stage' },
-    { match: 23, date: '14 February', team1: 'England', team2: 'Scotland', venue: 'Eden Gardens, Kolkata', phase: 'group-stage' },
-    { match: 24, date: '14 February', team1: 'New Zealand', team2: 'South Africa', venue: 'Ahmedabad', phase: 'group-stage' },
+    { match: 22, date: '14 February', team1: 'Ireland', team2: 'Oman', venue: 'Colombo (SSC)', aiPrediction: 'Ireland', phase: 'group-stage' },
+    { match: 23, date: '14 February', team1: 'England', team2: 'Scotland', venue: 'Eden Gardens, Kolkata', aiPrediction: 'England', phase: 'group-stage' },
+    { match: 24, date: '14 February', team1: 'New Zealand', team2: 'South Africa', venue: 'Ahmedabad', aiPrediction: 'South Africa', phase: 'group-stage' },
 
     // Day 9 - Feb 15
-    { match: 25, date: '15 February', team1: 'Nepal', team2: 'West Indies', venue: 'Wankhede, Mumbai', phase: 'group-stage' },
-    { match: 26, date: '15 February', team1: 'Namibia', team2: 'USA', venue: 'Chennai', phase: 'group-stage' },
-    { match: 27, date: '15 February', team1: 'India', team2: 'Pakistan', venue: 'Colombo (RPS)', phase: 'group-stage' },
+    { match: 25, date: '15 February', team1: 'Nepal', team2: 'West Indies', venue: 'Wankhede, Mumbai', aiPrediction: 'West Indies', phase: 'group-stage' },
+    { match: 26, date: '15 February', team1: 'Namibia', team2: 'USA', venue: 'Chennai', aiPrediction: 'Namibia', phase: 'group-stage' },
+    { match: 27, date: '15 February', team1: 'India', team2: 'Pakistan', venue: 'Colombo (RPS)', aiPrediction: 'India', phase: 'group-stage' },
 
     // Day 10 - Feb 16
-    { match: 28, date: '16 February', team1: 'Afghanistan', team2: 'UAE', venue: 'Delhi', phase: 'group-stage' },
-    { match: 29, date: '16 February', team1: 'England', team2: 'Italy', venue: 'Eden Gardens, Kolkata', phase: 'group-stage' },
-    { match: 30, date: '16 February', team1: 'Australia', team2: 'Sri Lanka', venue: 'Pallekele', phase: 'group-stage' },
+    { match: 28, date: '16 February', team1: 'Afghanistan', team2: 'UAE', venue: 'Delhi', aiPrediction: 'Afghanistan', phase: 'group-stage' },
+    { match: 29, date: '16 February', team1: 'England', team2: 'Italy', venue: 'Eden Gardens, Kolkata', aiPrediction: 'England', phase: 'group-stage' },
+    { match: 30, date: '16 February', team1: 'Australia', team2: 'Sri Lanka', venue: 'Pallekele', aiPrediction: 'Australia', phase: 'group-stage' },
 
     // Day 11 - Feb 17
-    { match: 31, date: '17 February', team1: 'Canada', team2: 'New Zealand', venue: 'Chennai', phase: 'group-stage' },
-    { match: 32, date: '17 February', team1: 'Ireland', team2: 'Zimbabwe', venue: 'Pallekele', phase: 'group-stage' },
-    { match: 33, date: '17 February', team1: 'Nepal', team2: 'Scotland', venue: 'Wankhede, Mumbai', phase: 'group-stage' },
+    { match: 31, date: '17 February', team1: 'Canada', team2: 'New Zealand', venue: 'Chennai', aiPrediction: 'New Zealand', phase: 'group-stage' },
+    { match: 32, date: '17 February', team1: 'Ireland', team2: 'Zimbabwe', venue: 'Pallekele', aiPrediction: 'Ireland', phase: 'group-stage' },
+    { match: 33, date: '17 February', team1: 'Nepal', team2: 'Scotland', venue: 'Wankhede, Mumbai', aiPrediction: 'Scotland', phase: 'group-stage' },
 
     // Day 12 - Feb 18
-    { match: 34, date: '18 February', team1: 'South Africa', team2: 'UAE', venue: 'Delhi', phase: 'group-stage' },
-    { match: 35, date: '18 February', team1: 'Namibia', team2: 'Pakistan', venue: 'Colombo (SSC)', phase: 'group-stage' },
-    { match: 36, date: '18 February', team1: 'India', team2: 'Netherlands', venue: 'Ahmedabad', phase: 'group-stage' },
+    { match: 34, date: '18 February', team1: 'South Africa', team2: 'UAE', venue: 'Delhi', aiPrediction: 'South Africa', phase: 'group-stage' },
+    { match: 35, date: '18 February', team1: 'Namibia', team2: 'Pakistan', venue: 'Colombo (SSC)', aiPrediction: 'Pakistan', phase: 'group-stage' },
+    { match: 36, date: '18 February', team1: 'India', team2: 'Netherlands', venue: 'Ahmedabad', aiPrediction: 'India', phase: 'group-stage' },
 
     // Day 13 - Feb 19
-    { match: 37, date: '19 February', team1: 'Italy', team2: 'West Indies', venue: 'Eden Gardens, Kolkata', phase: 'group-stage' },
-    { match: 38, date: '19 February', team1: 'Sri Lanka', team2: 'Zimbabwe', venue: 'Colombo (RPS)', phase: 'group-stage' },
-    { match: 39, date: '19 February', team1: 'Afghanistan', team2: 'Canada', venue: 'Chennai', phase: 'group-stage' },
+    { match: 37, date: '19 February', team1: 'Italy', team2: 'West Indies', venue: 'Eden Gardens, Kolkata', aiPrediction: 'West Indies', phase: 'group-stage' },
+    { match: 38, date: '19 February', team1: 'Sri Lanka', team2: 'Zimbabwe', venue: 'Colombo (RPS)', aiPrediction: 'Sri Lanka', phase: 'group-stage' },
+    { match: 39, date: '19 February', team1: 'Afghanistan', team2: 'Canada', venue: 'Chennai', aiPrediction: 'Afghanistan', phase: 'group-stage' },
 
     // Day 14 - Feb 20
-    { match: 40, date: '20 February', team1: 'Australia', team2: 'Oman', venue: 'Pallekele', phase: 'group-stage' },
+    { match: 40, date: '20 February', team1: 'Australia', team2: 'Oman', venue: 'Pallekele', aiPrediction: 'Australia', phase: 'group-stage' },
 
     // ============ SUPER 8s (Matches 41-52) ============
 
@@ -170,17 +170,17 @@ export const t20WorldCup2026Config: TournamentConfig = {
   ],
 
   bonusQuestions: [
-    { id: 'top-scorer', question: "Tournament's Top Scorer" },
-    { id: 'top-wicket-taker', question: "Tournament's Top Wicket-taker" },
-    { id: 'highest-team-score', question: 'Team with the Highest Single Match Score' },
-    { id: 'lowest-team-score', question: 'Team with the Lowest Single Match Score' },
-    { id: 'most-sixes', question: 'Most Sixes by a Player' },
-    { id: 'most-catches', question: 'Player with the Most Catches' },
-    { id: 'most-potm', question: 'Player with the Most Player-of-the-Match Awards' },
-    { id: 'best-economy', question: 'Best Bowling Economy (minimum 10 overs)' },
-    { id: 'highest-individual', question: 'Highest Individual Score' },
-    { id: 'fastest-fifty', question: 'Fastest Fifty' },
-    { id: 'player-of-tournament', question: 'Player of the Tournament' },
+    { id: 'top-scorer', question: "Tournament's Top Scorer", aiPrediction: 'Suryakumar Yadav' },
+    { id: 'top-wicket-taker', question: "Tournament's Top Wicket-taker", aiPrediction: 'Rashid Khan' },
+    { id: 'highest-team-score', question: 'Team with the Highest Single Match Score', aiPrediction: 'India' },
+    { id: 'lowest-team-score', question: 'Team with the Lowest Single Match Score', aiPrediction: 'Italy' },
+    { id: 'most-sixes', question: 'Most Sixes by a Player', aiPrediction: 'Shimron Hetmyer' },
+    { id: 'most-catches', question: 'Player with the Most Catches', aiPrediction: 'Suryakumar Yadav' },
+    { id: 'most-potm', question: 'Player with the Most Player-of-the-Match Awards', aiPrediction: 'Jasprit Bumrah' },
+    { id: 'best-economy', question: 'Best Bowling Economy (minimum 10 overs)', aiPrediction: 'Rashid Khan' },
+    { id: 'highest-individual', question: 'Highest Individual Score', aiPrediction: 'Travis Head' },
+    { id: 'fastest-fifty', question: 'Fastest Fifty', aiPrediction: 'Hardik Pandya' },
+    { id: 'player-of-tournament', question: 'Player of the Tournament', aiPrediction: 'Jasprit Bumrah' },
   ],
 
   teams: {
@@ -238,7 +238,7 @@ export const t20WorldCup2026Config: TournamentConfig = {
   features: {
     chipsEnabled: true,
     bonusQuestionsEnabled: true,
-    aiPredictionsEnabled: false, // No AI predictions set yet
+    aiPredictionsEnabled: true, // AI predictions enabled for group stage
     fetchFixturesFromSheets: true,
   },
 };
