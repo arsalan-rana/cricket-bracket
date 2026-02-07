@@ -22,7 +22,7 @@ export const t20WorldCup2026Config: TournamentConfig = {
       name: 'Group Stage',
       sheetName: 'Predictions Overview',
       matchRange: { start: 1, end: 40 },
-      deadline: '2026-02-06T23:00:00', // Before first match (Feb 7 12:30 AM EST)
+      deadline: '2026-02-07T00:29:00', // Before first match (Feb 7 12:30 AM EST)
       scoringType: 'fixed',
       pointsPerCorrect: 10,
       drawPoints: 5,
