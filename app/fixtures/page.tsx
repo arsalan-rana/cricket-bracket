@@ -84,9 +84,11 @@ interface Fixture {
 const AdminFixtureUpdate = ({
   fixture,
   setSnackbar,
+  onUpdate,
 }: {
   fixture: Fixture;
   setSnackbar: React.Dispatch<React.SetStateAction<SnackbarState>>;
+  onUpdate?: () => void;
 }) => {
   const [newWinner, setNewWinner] = useState<string>(fixture.winner);
   const [updating, setUpdating] = useState<boolean>(false);
@@ -120,6 +122,10 @@ const AdminFixtureUpdate = ({
         const lbResult = await lbResponse.json();
         if (lbResponse.ok) {
           setSnackbar({ open: true, message: 'Fixture and leaderboard updated successfully!', severity: 'success' });
+          // Refresh the fixtures data to show the winner indicator
+          if (onUpdate) {
+            onUpdate();
+          }
         } else {
           setSnackbar({ open: true, message: lbResult.error || 'Fixture updated but leaderboard refresh failed', severity: 'error' });
         }
@@ -156,7 +162,7 @@ const StyledAccordion = styled(Accordion)(({ theme }) => ({
   borderRadius: '16px',
   marginBottom: theme.spacing(2),
   border: '1px solid rgba(0,0,0,0.06)',
-  overflow: 'hidden',
+  overflow: 'visible', // Changed to visible to show winner badge
   transition: 'all 0.3s ease-in-out',
   width: '100%',
   maxWidth: '100%',
@@ -195,10 +201,12 @@ const FixtureAccordion = ({
   fixture,
   session,
   setSnackbar,
+  onUpdate,
 }: {
   fixture: Fixture;
   session: any;
   setSnackbar: React.Dispatch<React.SetStateAction<SnackbarState>>;
+  onUpdate?: () => void;
 }) => {
   const team1Picks = Object.entries(fixture.picks)
     .filter(([_, pick]) => pick === fixture.team1)
@@ -243,37 +251,57 @@ const FixtureAccordion = ({
               }}
             />
           </Box>
-          <Box sx={{ 
-            display: 'flex', 
+          <Box sx={{
+            display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' },
-            gap: { xs: 0.3, sm: 2 }, 
-            justifyContent: { xs: 'stretch', sm: 'center' }, 
+            gap: { xs: 0.3, sm: 2 },
+            justifyContent: { xs: 'stretch', sm: 'center' },
             alignItems: { xs: 'stretch', sm: 'center' },
             mt: { xs: 1, sm: 2 },
+            pt: { xs: 1.5, sm: 2 }, // Add top padding for winner badge
             px: { xs: 0, sm: 0 },
             width: '100%',
             maxWidth: '100%',
-            overflow: 'hidden',
+            overflow: 'visible', // Changed from 'hidden' to 'visible' to show badge
+            position: 'relative',
           }}>
-            <BigChip
-              label={`${teamFlags[fixture.team1] || ''} ${fixture.team1}`}
+            <Box sx={{ position: 'relative', width: { xs: '100%', sm: 'auto' } }}>
+              <BigChip
+                label={`${teamFlags[fixture.team1] || ''} ${fixture.team1}`}
+                sx={{
+                  backgroundColor: teamColors[fixture.team1]?.primary || '#E0E0E0',
+                  color: teamColors[fixture.team1]?.secondary || '#000000',
+                  border: `2px solid ${teamColors[fixture.team1]?.secondary || '#E0E0E0'}`,
+                }}
+              />
+              {fixture.winner && fixture.winner.trim() !== '' && fixture.team1 === fixture.winner && (
+                <Chip
+                  label="WINNER"
+                  size="small"
+                  sx={{
+                    position: 'absolute',
+                    top: { xs: -8, sm: -10 },
+                    right: { xs: -8, sm: -10 },
+                    backgroundColor: '#FFD700',
+                    color: '#000',
+                    fontWeight: 800,
+                    fontSize: { xs: '0.6rem', sm: '0.65rem' },
+                    height: { xs: 20, sm: 24 },
+                    boxShadow: '0 2px 8px rgba(255, 215, 0, 0.6)',
+                    border: '2px solid #FFA500',
+                    zIndex: 10,
+                    '& .MuiChip-label': {
+                      px: { xs: 0.5, sm: 1 },
+                    }
+                  }}
+                />
+              )}
+            </Box>
+            <Typography
+              variant="body2"
               sx={{
-                backgroundColor: fixture.winner === 'DRAW' 
-                  ? '#ED6C02'
-                  : fixture.team1 === fixture.winner
-                  ? '#2E7D32'
-                  : teamColors[fixture.team1]?.primary || '#E0E0E0',
-                color: fixture.winner === 'DRAW' || fixture.team1 === fixture.winner
-                  ? 'white'
-                  : teamColors[fixture.team1]?.secondary || '#000000',
-                border: `2px solid ${teamColors[fixture.team1]?.secondary || '#E0E0E0'}`,
-              }}
-            />
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                alignSelf: 'center', 
-                mx: { xs: 0, sm: 1 }, 
+                alignSelf: 'center',
+                mx: { xs: 0, sm: 1 },
                 my: { xs: 0.2, sm: 0 },
                 fontWeight: 'bold',
                 color: 'text.secondary',
@@ -284,20 +312,65 @@ const FixtureAccordion = ({
             >
               vs
             </Typography>
-            <BigChip
-              label={`${teamFlags[fixture.team2] || ''} ${fixture.team2}`}
-              sx={{
-                backgroundColor: fixture.winner === 'DRAW' 
-                  ? '#ED6C02'
-                  : fixture.team2 === fixture.winner
-                  ? '#2E7D32'
-                  : teamColors[fixture.team2]?.primary || '#E0E0E0',
-                color: fixture.winner === 'DRAW' || fixture.team2 === fixture.winner
-                  ? 'white'
-                  : teamColors[fixture.team2]?.secondary || '#000000',
-                border: `2px solid ${teamColors[fixture.team2]?.secondary || '#E0E0E0'}`,
-              }}
-            />
+            <Box sx={{ position: 'relative', width: { xs: '100%', sm: 'auto' } }}>
+              <BigChip
+                label={`${teamFlags[fixture.team2] || ''} ${fixture.team2}`}
+                sx={{
+                  backgroundColor: teamColors[fixture.team2]?.primary || '#E0E0E0',
+                  color: teamColors[fixture.team2]?.secondary || '#000000',
+                  border: `2px solid ${teamColors[fixture.team2]?.secondary || '#E0E0E0'}`,
+                }}
+              />
+              {fixture.winner && fixture.winner.trim() !== '' && fixture.team2 === fixture.winner && (
+                <Chip
+                  label="WINNER"
+                  size="small"
+                  sx={{
+                    position: 'absolute',
+                    top: { xs: -8, sm: -10 },
+                    right: { xs: -8, sm: -10 },
+                    backgroundColor: '#FFD700',
+                    color: '#000',
+                    fontWeight: 800,
+                    fontSize: { xs: '0.6rem', sm: '0.65rem' },
+                    height: { xs: 20, sm: 24 },
+                    boxShadow: '0 2px 8px rgba(255, 215, 0, 0.6)',
+                    border: '2px solid #FFA500',
+                    zIndex: 10,
+                    '& .MuiChip-label': {
+                      px: { xs: 0.5, sm: 1 },
+                    }
+                  }}
+                />
+              )}
+            </Box>
+
+            {/* Draw indicator - positioned absolutely in center */}
+            {fixture.winner && fixture.winner.trim() !== '' && fixture.winner === 'DRAW' && (
+              <Box sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 100,
+              }}>
+                <Chip
+                  label="DRAW"
+                  sx={{
+                    backgroundColor: '#ED6C02',
+                    color: 'white',
+                    fontWeight: 800,
+                    fontSize: { xs: '0.7rem', sm: '0.85rem' },
+                    height: { xs: 24, sm: 28 },
+                    boxShadow: '0 4px 12px rgba(237, 108, 2, 0.6)',
+                    border: '2px solid #F57C00',
+                    '& .MuiChip-label': {
+                      px: { xs: 1, sm: 1.5 },
+                    }
+                  }}
+                />
+              </Box>
+            )}
           </Box>
         </Box>
       </AccordionSummary>
@@ -337,7 +410,7 @@ const FixtureAccordion = ({
           </Grid>
         </Grid>
         {ADMIN_EMAIL && session.user?.email === ADMIN_EMAIL && (
-          <AdminFixtureUpdate fixture={fixture} setSnackbar={setSnackbar} />
+          <AdminFixtureUpdate fixture={fixture} setSnackbar={setSnackbar} onUpdate={onUpdate} />
         )}
       </AccordionDetails>
     </StyledAccordion>
@@ -397,10 +470,10 @@ const transformDataForFixtures = (data: any[][] | undefined): Fixture[] => {
   const team1Index = header.indexOf('Team 1');
   const team2Index = header.indexOf('Team 2');
   const winnerIndex = header.indexOf('Winner');
-  if ([dateIndex, matchIndex, team1Index, team2Index, winnerIndex].includes(-1)) {
+  if ([dateIndex, matchIndex, team1Index, winnerIndex].includes(-1)) {
     throw new Error('Required columns not found');
   }
-  
+
   let lastCompletedFixtureIndex = -1;
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
@@ -423,23 +496,109 @@ const transformDataForFixtures = (data: any[][] | undefined): Fixture[] => {
     }
     fixtures.push(fixture);
   }
-  
+
   // For fixtures page: show ALL completed + ONLY the next upcoming (if any)
   if (lastCompletedFixtureIndex === -1) {
     // No completed fixtures, show only the first upcoming
     return fixtures.length > 0 ? [fixtures[0]] : [];
   }
-  
+
   // Get only the actually completed fixtures (those with winners)
   const completedFixtures = fixtures.filter(f => f.winner && f.winner.trim() !== '');
-  
+
   // Find the first upcoming fixture (no winner)
   const nextUpcoming = fixtures.find(f => !f.winner || f.winner.trim() === '');
-  
+
   if (nextUpcoming) {
     return [...completedFixtures, nextUpcoming].reverse();
   }
   return completedFixtures.reverse();
+};
+
+// Function for GROUP STAGE fixtures page - shows ALL completed + ALL next day's matches
+const transformDataForFixturesGroupStage = (data: any[][] | undefined): Fixture[] => {
+  if (!data || data.length === 0) return [];
+  const header = data[0];
+  const fixtures: Fixture[] = [];
+  const dateIndex = header.indexOf('Date');
+  const matchIndex = header.indexOf('Match');
+  const team1Index = header.indexOf('Team 1');
+  const team2Index = header.indexOf('Team 2');
+  const winnerIndex = header.indexOf('Winner');
+  if ([dateIndex, matchIndex, team1Index, team2Index, winnerIndex].includes(-1)) {
+    throw new Error('Required columns not found');
+  }
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (row[dateIndex] === 'Date' && row[matchIndex] === 'Match') continue;
+    const fixture: Fixture = {
+      date: row[dateIndex],
+      match: row[matchIndex],
+      team1: row[team1Index],
+      team2: row[team2Index],
+      winner: row[winnerIndex],
+      picks: {},
+      rowIndex: i,
+    };
+    for (let j = 0; j < header.length; j++) {
+      const columnName = header[j];
+      if (![header[dateIndex], header[matchIndex], header[team1Index], header[team2Index], 'Winner', 'POTM'].includes(columnName)) {
+        fixture.picks[columnName] = row[j];
+      }
+    }
+    fixtures.push(fixture);
+  }
+
+  // Get completed fixtures (those with winners)
+  const completedFixtures = fixtures.filter(f => f.winner && f.winner.trim() !== '');
+
+  // Get upcoming fixtures (no winner)
+  const upcomingFixtures = fixtures.filter(f => !f.winner || f.winner.trim() === '');
+
+  if (upcomingFixtures.length === 0) {
+    // All fixtures completed
+    return completedFixtures.reverse();
+  }
+
+  // Find the first upcoming match's date
+  const firstUpcomingDate = upcomingFixtures[0].date;
+
+  // Parse the date (format: "7 February" or similar)
+  const parseFixtureDate = (dateStr: string): DateTime | null => {
+    try {
+      // Try to parse "7 February" format
+      const parts = dateStr.trim().split(' ');
+      if (parts.length >= 2) {
+        const day = parseInt(parts[0], 10);
+        const month = parts[1];
+        // Assume year 2026 for T20 WC
+        const dateString = `${day} ${month} 2026`;
+        return DateTime.fromFormat(dateString, 'd MMMM yyyy', { zone: 'America/New_York' });
+      }
+    } catch (e) {
+      console.error('Error parsing date:', dateStr, e);
+    }
+    return null;
+  };
+
+  const firstUpcomingDateTime = parseFixtureDate(firstUpcomingDate);
+
+  if (!firstUpcomingDateTime || !firstUpcomingDateTime.isValid) {
+    // Fallback to showing just the first upcoming match if date parsing fails
+    return [...completedFixtures, upcomingFixtures[0]].reverse();
+  }
+
+  // Get all matches for the next day (same date as first upcoming match)
+  const nextDayMatches = upcomingFixtures.filter(f => {
+    const fixtureDateTime = parseFixtureDate(f.date);
+    if (!fixtureDateTime || !fixtureDateTime.isValid) return false;
+    // Check if it's the same day
+    return fixtureDateTime.hasSame(firstUpcomingDateTime, 'day');
+  });
+
+  // Return completed fixtures + all next day matches, reversed
+  return [...completedFixtures, ...nextDayMatches].reverse();
 };
 
 const Fixtures = () => {
@@ -456,27 +615,29 @@ const Fixtures = () => {
   const super4Phase = config.phases.find((p) => p.id === 'super4');
   const finalsPhase = config.phases.find((p) => p.id === 'finals');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/api/sheets', { cache: 'no-store' });
-        const result = await response.json();
-        if (response.ok) {
-          setGroupStageFixtures(transformDataForFixtures(result.groupStage));
-          setSuper4Fixtures(transformDataForFixtures(result.super4));
-          setFinalsFixtures(transformDataForFixtures(result.finals));
-        } else {
-          setError(result.error || 'An error occurred while fetching data');
-        }
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError('An unknown error occurred');
-        }
+  const fetchData = async () => {
+    try {
+      const response = await fetch('/api/sheets', { cache: 'no-store' });
+      const result = await response.json();
+      if (response.ok) {
+        // Use new transform function for group stage (shows all next day matches)
+        setGroupStageFixtures(transformDataForFixturesGroupStage(result.groupStage));
+        // Use original transform for Super 8 and Finals (shows only next match)
+        setSuper4Fixtures(transformDataForFixtures(result.super4));
+        setFinalsFixtures(transformDataForFixtures(result.finals));
+      } else {
+        setError(result.error || 'An error occurred while fetching data');
       }
-    };
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unknown error occurred');
+      }
+    }
+  };
 
+  useEffect(() => {
     if (session) {
       fetchData();
     }
@@ -543,7 +704,7 @@ const Fixtures = () => {
             {finalsPhase?.name || 'Finals'}
           </Typography>
           {finalsFixtures.map((fixture, index) => (
-            <FixtureAccordion key={`finals-${index}`} fixture={fixture} session={session} setSnackbar={setSnackbar} />
+            <FixtureAccordion key={`finals-${index}`} fixture={fixture} session={session} setSnackbar={setSnackbar} onUpdate={fetchData} />
           ))}
         </Box>
       )}
@@ -555,7 +716,7 @@ const Fixtures = () => {
             {super4Phase?.name || 'Super 4'}
           </Typography>
           {super4Fixtures.map((fixture, index) => (
-            <FixtureAccordion key={`super4-${index}`} fixture={fixture} session={session} setSnackbar={setSnackbar} />
+            <FixtureAccordion key={`super4-${index}`} fixture={fixture} session={session} setSnackbar={setSnackbar} onUpdate={fetchData} />
           ))}
         </Box>
       )}
@@ -567,7 +728,7 @@ const Fixtures = () => {
             {groupStagePhase?.name || 'Group Stage'}
           </Typography>
           {groupStageFixtures.map((fixture, index) => (
-            <FixtureAccordion key={`group-${index}`} fixture={fixture} session={session} setSnackbar={setSnackbar} />
+            <FixtureAccordion key={`group-${index}`} fixture={fixture} session={session} setSnackbar={setSnackbar} onUpdate={fetchData} />
           ))}
         </Box>
       )}
