@@ -26,34 +26,55 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Missing required fields: date, match, or newWinner' });
   }
 
-  // Parse match number (assuming match is sent as a number or numeric string)
-  const matchNumber = Number(match);
-  if (isNaN(matchNumber)) {
-    return res.status(400).json({ error: 'Invalid match number' });
+  // Parse match number - handle formats like "Match 1", "1", or numbers
+  let matchString = typeof match === 'string' ? match.trim() : String(match);
+
+  // Remove "Match " prefix if present (case-insensitive)
+  matchString = matchString.replace(/^match\s+/i, '');
+
+  const matchNumber = parseInt(matchString, 10);
+
+  if (isNaN(matchNumber) || matchNumber < 1) {
+    console.error('Invalid match number received:', { match, matchString, matchNumber });
+    return res.status(400).json({ error: `Invalid match number: "${match}"` });
   }
 
-  // Determine which bracket the fixture belongs to:
-  // Group Stage: match 1-12, Super 4: match 13-18, Finals: match 19+
+  // Determine which bracket the fixture belongs to based on T20 WC 2026 config:
+  // Group Stage: 1-40, Super 8s: 41-52, Semi-Finals: 53-54, Finals: 55
   let bracketType: 'group' | 'super4' | 'finals' = 'group';
-  if (matchNumber >= 13 && matchNumber < 19) {
+  let sheetName = 'Predictions Overview';
+
+  if (matchNumber >= 1 && matchNumber <= 40) {
+    bracketType = 'group';
+    sheetName = 'Predictions Overview';
+  } else if (matchNumber >= 41 && matchNumber <= 52) {
     bracketType = 'super4';
-  } else if (matchNumber >= 19) {
+    sheetName = 'Super 8';
+  } else if (matchNumber >= 53 && matchNumber <= 54) {
     bracketType = 'finals';
+    sheetName = 'Semi-Finals';
+  } else if (matchNumber === 55) {
+    bracketType = 'finals';
+    sheetName = 'Final';
+  } else {
+    return res.status(400).json({ error: `Match number ${matchNumber} is out of valid range (1-55)` });
   }
 
   // Set sheet range and offset based on bracket type.
-  let range = '';
+  const range = `${sheetName}!A1:Z1000`;
   let offset = 0;
+
   if (bracketType === 'group') {
-    range = 'Predictions Overview!A1:Z1000';
+    offset = 0; // Group stage: match 1 is in row 1 (after header)
   } else if (bracketType === 'super4') {
-    range = 'Super 4!A1:Z1000';
-    offset = 12; // Using the same offset as in submission logic.
+    offset = 40; // Super 8: match 41 should be in row 1 (after header)
   } else if (bracketType === 'finals') {
-    range = 'Finals!A1:Z1000';
-    // For finals, assume the fixture is stored in the first row after the header.
-    // So, set offset = matchNumber - 1 to always target row index 1.
-    offset = matchNumber - 1;
+    // Semi-Finals & Final: match 53 should be in row 1, match 54 in row 2, match 55 in row 1 of Final sheet
+    if (sheetName === 'Semi-Finals') {
+      offset = 52; // match 53 -> row 1, match 54 -> row 2
+    } else if (sheetName === 'Final') {
+      offset = 54; // match 55 -> row 1
+    }
   }
 
   try {
@@ -97,8 +118,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const row = data[targetRowIndex];
     // Use trimmed values for comparison.
-    if (row[dateIndex].trim() !== date.trim() || row[matchIndex].toString().trim() !== match.toString().trim()) {
-      console.warn('Mismatch in fixture data; proceeding with update.');
+    // Normalize match values by extracting numbers for comparison
+    const sheetMatchValue = row[matchIndex].toString().trim().replace(/^match\s+/i, '');
+    const requestMatchValue = matchString;
+
+    if (row[dateIndex].trim() !== date.trim() || sheetMatchValue !== requestMatchValue) {
+      console.warn('Mismatch in fixture data; proceeding with update.', {
+        sheetDate: row[dateIndex].trim(),
+        requestDate: date.trim(),
+        sheetMatch: sheetMatchValue,
+        requestMatch: requestMatchValue,
+      });
     }
 
     // Update the Winner column for the target row.
