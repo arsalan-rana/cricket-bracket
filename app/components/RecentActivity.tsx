@@ -30,7 +30,9 @@ const eventTypeMap: { [key: string]: string } = {
   SUPER4_SUBMITTED: 'Super 4 Picks Submitted 🟡',
   SUPER4_UPDATED: 'Super 4 Picks Updated 🔄',
   PLAYOFFS_SUBMITTED: 'Super 4 Picks Submitted 🟡',
-  PLAYOFFS_UPDATED: 'Super 4 Picks Updated 🔄'
+  PLAYOFFS_UPDATED: 'Super 4 Picks Updated 🔄',
+  CHIP_DOUBLEUP_ACTIVATED: 'Double Up Activated 2️⃣',
+  CHIP_WILDCARD_ACTIVATED: 'Wildcard Activated 🃏'
   // Add additional mappings as needed.
 };
 

@@ -3,8 +3,32 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from './auth/[...nextauth]';
 import { google } from 'googleapis';
+import { DateTime } from 'luxon';
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
+
+// Helper function to log an activity event
+const logActivity = async (
+  sheets: any,
+  spreadsheetId: string,
+  timestamp: string,
+  eventType: string,
+  user: string,
+  details: string = ''
+) => {
+  try {
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: 'Activity Log!A:D',
+      valueInputOption: 'RAW',
+      requestBody: {
+        values: [[timestamp, eventType, user, details]],
+      },
+    });
+  } catch (error) {
+    console.error('Error logging activity:', error);
+  }
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Only allow POST requests.
@@ -60,6 +84,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const sheets = google.sheets({ version: 'v4', auth });
     const spreadsheetId = process.env.GOOGLE_SHEET_ID!;
+
+    // Convert current time to EST for logging
+    const timestampEST = DateTime.now().setZone('America/New_York').toFormat('yyyy-MM-dd HH:mm:ss');
 
     // Define the range to fetch the entire Chips tab (now with 5 columns).
     // Assume header row is in row 1.
@@ -155,6 +182,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           values: [currentRow],
         },
       });
+    }
+
+    // Log chip activations to Activity Log
+    const phaseName = phase === 'group-stage' ? 'Group Stage' : 'Super 4';
+
+    if (newDoubleUp !== null) {
+      await logActivity(
+        sheets,
+        spreadsheetId,
+        timestampEST,
+        'CHIP_DOUBLEUP_ACTIVATED',
+        name,
+        `activated Double Up chip for ${phaseName}`
+      );
+    }
+
+    if (newWildcard !== null) {
+      await logActivity(
+        sheets,
+        spreadsheetId,
+        timestampEST,
+        'CHIP_WILDCARD_ACTIVATED',
+        name,
+        `activated Wildcard chip for ${phaseName}`
+      );
     }
 
     return res.status(200).json({ message: 'Chips submitted successfully' });
