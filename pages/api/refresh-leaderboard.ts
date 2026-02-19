@@ -229,6 +229,7 @@ function calculateLeaderboard(
       const playerName = row[nameIndex];
       const timestamp = row[timestampIndex];
       if (playerName && timestamp) {
+        initPlayer(playerName); // ensure player exists before setting timestamp
         players[playerName].timestamp = timestamp;
       }
     }
@@ -298,13 +299,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       linksRes,
       chipsRes
     ] = await Promise.all([
-      sheets.spreadsheets.values.get({ spreadsheetId, range: 'Predictions Overview!A1:Z1000' }),
-      sheets.spreadsheets.values.get({ spreadsheetId, range: 'Super 4!A1:Z1000' }).catch(() => ({ data: { values: [] } })),
+      sheets.spreadsheets.values.get({ spreadsheetId, range: `${config.sheets.predictionsOverview}!A1:Z1000` }),
+      sheets.spreadsheets.values.get({ spreadsheetId, range: `${config.sheets.super4}!A1:Z1000` }).catch(() => ({ data: { values: [] } })),
       sheets.spreadsheets.values.get({ spreadsheetId, range: 'Playoffs!A1:Z1000' }).catch(() => ({ data: { values: [] } })),
-      sheets.spreadsheets.values.get({ spreadsheetId, range: 'Finals!A1:Z1000' }).catch(() => ({ data: { values: [] } })),
-      sheets.spreadsheets.values.get({ spreadsheetId, range: 'Bonuses Overview!A1:Z1000' }),
+      sheets.spreadsheets.values.get({ spreadsheetId, range: `${config.sheets.finals}!A1:Z1000` }).catch(() => ({ data: { values: [] } })),
+      sheets.spreadsheets.values.get({ spreadsheetId, range: `${config.sheets.bonusesOverview}!A1:Z1000` }),
       sheets.spreadsheets.values.get({ spreadsheetId, range: 'Links!A:B' }),
-      sheets.spreadsheets.values.get({ spreadsheetId, range: 'Chips!A:C' }).catch(() => ({ data: { values: [] } }))
+      sheets.spreadsheets.values.get({ spreadsheetId, range: `${config.sheets.chips}!A:C` }).catch(() => ({ data: { values: [] } }))
     ]);
 
     const groupStageData = groupStageRes.data.values || [];
