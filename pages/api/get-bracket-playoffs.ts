@@ -31,49 +31,57 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const config = getConfig();
     const super8SheetName = config.sheets.super4;
 
-    // Fetch fixture picks from the Super 8 tab
-    const playoffsResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId: process.env.GOOGLE_SHEET_ID!,
-      range: `${super8SheetName}!A1:Z1000`,
-    });
-    const playoffsData = playoffsResponse.data.values;
+    // Fetch Super 8 picks — fail gracefully if tab doesn't exist yet
     const playoffsPicks: { [match: number]: string } = {};
+    try {
+      const playoffsResponse = await sheets.spreadsheets.values.get({
+        spreadsheetId: process.env.GOOGLE_SHEET_ID!,
+        range: `${super8SheetName}!A1:Z1000`,
+      });
+      const playoffsData = playoffsResponse.data.values;
+      if (playoffsData && playoffsData.length > 0) {
+        const playoffsHeaders = playoffsData[0];
+        const userColumnIndex = playoffsHeaders.indexOf(name);
+        if (userColumnIndex !== -1) {
+          const playoffsOffset = getMatchOffset('super4');
+          for (let i = 1; i < playoffsData.length; i++) {
+            if (playoffsData[i] && playoffsData[i][userColumnIndex]) {
+              playoffsPicks[i + playoffsOffset] = playoffsData[i][userColumnIndex];
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(`Could not fetch ${super8SheetName} tab — it may not exist yet:`, err);
+    }
 
-    // If sheet has data and headers exist
-    if (playoffsData && playoffsData.length > 0) {
-      const playoffsHeaders = playoffsData[0];
-      const userColumnIndex = playoffsHeaders.indexOf(name);
-      if (userColumnIndex !== -1) {
-        const playoffsOffset = getMatchOffset('super4');
-        for (let i = 1; i < playoffsData.length; i++) {
-          if (playoffsData[i] && playoffsData[i][userColumnIndex]) {
-            // Add the offset so that row index corresponds to match number
-            playoffsPicks[i + playoffsOffset] = playoffsData[i][userColumnIndex];
-          }
-        }
-      }
-    }
-    
-    // Fetch fixture picks from the Finals tab
+    // Fetch Finals picks — fail gracefully if tab doesn't exist yet
     const finalsSheetName = config.sheets.finals;
-    const finalsResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId: process.env.GOOGLE_SHEET_ID!,
-      range: `${finalsSheetName}!A1:Z1000`,
-    });
-    const finalsData = finalsResponse.data.values;
-    let finalsPicks: { [match: number]: string } = {};
-    if (finalsData && finalsData.length > 0) {
-      const finalsHeaders = finalsData[0];
-      const finalsUserColIndex = finalsHeaders.indexOf(name);
-      if (finalsUserColIndex !== -1) {
-        for (let i = 1; i < finalsData.length; i++) {
-          if (finalsData[i][finalsUserColIndex]) {
-            finalsPicks[i] = finalsData[i][finalsUserColIndex];
+    const finalsPicks: { [match: number]: string } = {};
+    try {
+      const finalsResponse = await sheets.spreadsheets.values.get({
+        spreadsheetId: process.env.GOOGLE_SHEET_ID!,
+        range: `${finalsSheetName}!A1:Z1000`,
+      });
+      const finalsData = finalsResponse.data.values;
+      if (finalsData && finalsData.length > 0) {
+        const finalsHeaders = finalsData[0];
+        const finalsUserColIndex = finalsHeaders.indexOf(name);
+        if (finalsUserColIndex !== -1) {
+          const finalsOffset = getMatchOffset('finals');
+          for (let i = 1; i < finalsData.length; i++) {
+            if (finalsData[i] && finalsData[i][finalsUserColIndex]) {
+              finalsPicks[i + finalsOffset] = finalsData[i][finalsUserColIndex];
+            }
           }
         }
       }
+    } catch (err) {
+      console.warn(`Could not fetch ${finalsSheetName} tab — it may not exist yet:`, err);
     }
-    
+
+    console.log('Super 8 picks for', name, ':', playoffsPicks);
+
     return res.status(200).json({ playoffsPicks, finalsPicks });
   } catch (error) {
     console.error('Error fetching playoff bracket picks:', error);

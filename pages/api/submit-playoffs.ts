@@ -107,6 +107,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Step 4: Update the Super 8 sheet
+    console.log('Saving Super 8 picks for', name, '- Total matches:', Object.keys(picks).length);
+    console.log('Sheet name:', sheetName, '- Offset:', offset);
+    console.log('Sample data being saved:', Object.entries(picks).slice(0, 3));
+
     await sheets.spreadsheets.values.update({
       spreadsheetId: process.env.GOOGLE_SHEET_ID!,
       range: `${sheetName}!A1:Z1000`,

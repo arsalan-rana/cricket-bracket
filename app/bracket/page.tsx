@@ -226,11 +226,16 @@ const BracketSubmission = () => {
     const fetchPlayoffsFinalsPicks = async () => {
       if (!session?.user?.name) return;
       try {
-        const response = await fetch(`/api/get-bracket-playoffs?name=${encodeURIComponent(session.user.name)}`);
+        const response = await fetch(`/api/get-bracket-playoffs?name=${encodeURIComponent(session.user.name)}&t=${Date.now()}`, {
+          cache: 'no-store'
+        });
         const data = await response.json();
         if (response.ok) {
+          console.log('Fetched Super 8 picks:', data.playoffsPicks);
           setPlayoffsPredictions(data.playoffsPicks || {});
           setFinalsPredictions(data.finalsPicks || {});
+        } else {
+          console.error('Error response:', data);
         }
       } catch (error) {
         console.error("Error fetching playoff and finals picks:", error);
