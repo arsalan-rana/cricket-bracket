@@ -161,4 +161,7 @@ export interface TournamentConfig {
 
   /** Feature flags */
   features: FeatureFlags;
+
+  /** Optional: Deadline for makeup bonus questions (ISO 8601 format) */
+  bonusMakeupDeadline?: string;
 }

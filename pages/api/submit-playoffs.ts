@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../pages/api/auth/[...nextauth]';
 import { google } from 'googleapis';
 import { DateTime } from 'luxon';
-import { getMatchOffset } from '@/lib/tournament';
+import { getMatchOffset, getConfig } from '@/lib/tournament';
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 
@@ -57,10 +57,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Convert current time to Eastern Time
     const timestampEST = DateTime.now().setZone('America/New_York').toFormat('yyyy-MM-dd HH:mm:ss');
 
-    // Step 1: Fetch existing sheet data from "Super 4"
+    // Get the sheet name from config
+    const config = getConfig();
+    const sheetName = config.sheets.super4;
+
+    // Step 1: Fetch existing sheet data from Super 8 sheet
     const sheetResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.GOOGLE_SHEET_ID!,
-      range: 'Super 4!A1:Z1000',
+      range: `${sheetName}!A1:Z1000`,
     });
     const data = sheetResponse.data.values;
     if (!data || data.length === 0) {
@@ -74,20 +78,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Step 2: If user doesn't have a column, add one (new submission)
     if (userColumnIndex === -1) {
-      eventType = isDraft ? 'SUPER4_DRAFT_SAVED' : 'SUPER4_SUBMITTED';
-      eventDetails = isDraft ? 'saved their Super 4 draft' : 'submitted their Super 4 picks';
+      eventType = isDraft ? 'SUPER8_DRAFT_SAVED' : 'SUPER8_SUBMITTED';
+      eventDetails = isDraft ? `saved their ${sheetName} draft` : `submitted their ${sheetName} picks`;
       userColumnIndex = headers.length;
       headers.push(name);
       await sheets.spreadsheets.values.update({
         spreadsheetId: process.env.GOOGLE_SHEET_ID!,
-        range: 'Super 4!A1:Z1',
+        range: `${sheetName}!A1:Z1`,
         valueInputOption: 'RAW',
         requestBody: { values: [headers] },
       });
     } else {
       // Existing column – update submission
-      eventType = isDraft ? 'SUPER4_DRAFT_SAVED' : 'SUPER4_UPDATED';
-      eventDetails = isDraft ? 'saved their Super 4 draft' : 'updated their Super 4 picks';
+      eventType = isDraft ? 'SUPER8_DRAFT_SAVED' : 'SUPER8_UPDATED';
+      eventDetails = isDraft ? `saved their ${sheetName} draft` : `updated their ${sheetName} picks`;
     }
 
     // Step 3: Update each row with the user's picks.
@@ -102,10 +106,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       updatedData[rowIndex][userColumnIndex] = picks[matchNumber];
     }
 
-    // Step 4: Update the "Super 4" sheet
+    // Step 4: Update the Super 8 sheet
     await sheets.spreadsheets.values.update({
       spreadsheetId: process.env.GOOGLE_SHEET_ID!,
-      range: 'Super 4!A1:Z1000',
+      range: `${sheetName}!A1:Z1000`,
       valueInputOption: 'RAW',
       requestBody: { values: updatedData },
     });
@@ -131,7 +135,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       eventDetails
     );
 
-    return res.status(200).json({ message: 'Super 4 picks submitted successfully' });
+    return res.status(200).json({ message: `${sheetName} picks submitted successfully` });
   } catch (error) {
     console.error('Error submitting playoffs picks:', error);
     return res.status(500).json({ error: 'Error submitting playoffs picks' });

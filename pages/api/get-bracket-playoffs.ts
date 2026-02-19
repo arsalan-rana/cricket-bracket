@@ -2,7 +2,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getSession } from 'next-auth/react';
 import { google } from 'googleapis';
-import { getMatchOffset } from '@/lib/tournament';
+import { getMatchOffset, getConfig } from '@/lib/tournament';
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
 
@@ -26,11 +26,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
     
     const sheets = google.sheets({ version: 'v4', auth });
-    
-    // Fetch fixture picks from the "Super 4" tab
+
+    // Get the sheet name from config
+    const config = getConfig();
+    const super8SheetName = config.sheets.super4;
+
+    // Fetch fixture picks from the Super 8 tab
     const playoffsResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.GOOGLE_SHEET_ID!,
-      range: 'Super 4!A1:Z1000',
+      range: `${super8SheetName}!A1:Z1000`,
     });
     const playoffsData = playoffsResponse.data.values;
     const playoffsPicks: { [match: number]: string } = {};
@@ -50,10 +54,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
     
-    // Fetch fixture picks from the "Finals" tab
+    // Fetch fixture picks from the Finals tab
+    const finalsSheetName = config.sheets.finals;
     const finalsResponse = await sheets.spreadsheets.values.get({
       spreadsheetId: process.env.GOOGLE_SHEET_ID!,
-      range: 'Finals!A1:Z1000',
+      range: `${finalsSheetName}!A1:Z1000`,
     });
     const finalsData = finalsResponse.data.values;
     let finalsPicks: { [match: number]: string } = {};

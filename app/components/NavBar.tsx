@@ -40,6 +40,7 @@ const NavBar: React.FC = () => {
     { href: '/bracket', label: 'Your Bracket', icon: '🏏' },
     { href: '/fixtures', label: 'Fixture Picks', icon: '📊' },
     { href: '/bonus-picks', label: 'Bonus Picks', icon: '🎯' },
+    { href: '/bonus-makeup', label: 'Bonus Makeup', icon: '📝' },
     { href: '/leaderboard', label: 'Leaderboard', icon: '🏆' },
     { href: '/rules', label: 'Rules', icon: '📋' },
   ];
@@ -75,9 +76,9 @@ const NavBar: React.FC = () => {
             return (
               <Link key={item.href} href={item.href} passHref>
                 <ListItem
-                  button
                   component="a"
                   sx={{
+                    cursor: 'pointer',
                     mx: 2,
                     mb: 1,
                     borderRadius: 3,
@@ -134,9 +135,9 @@ const NavBar: React.FC = () => {
       >
         <List>
           <ListItem
-            button
             onClick={() => signOut()}
             sx={{
+              cursor: 'pointer',
               background: 'linear-gradient(135deg, #DA2C5A 0%, #FF9100 100%)',
               borderRadius: 3,
               boxShadow: '0 4px 12px rgba(218,44,90,0.3)',

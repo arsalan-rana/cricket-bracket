@@ -32,7 +32,7 @@ export const t20WorldCup2026Config: TournamentConfig = {
       name: 'Super 8s',
       sheetName: 'Super 8',
       matchRange: { start: 41, end: 52 },
-      deadline: '2026-02-21T08:00:00', // Before first Super 8 match
+      deadline: '2026-02-21T08:29:00', // Before first Super 8 match
       scoringType: 'pool',
       poolSize: 160,
     },
@@ -130,34 +130,34 @@ export const t20WorldCup2026Config: TournamentConfig = {
     // ============ SUPER 8s (Matches 41-52) ============
 
     // Feb 21
-    { match: 41, date: '21 February', team1: 'TBA', team2: 'TBA', venue: 'Colombo (RPS)', phase: 'super4' },
+    { match: 41, date: '21 February', team1: 'Pakistan', team2: 'New Zealand', venue: 'Colombo (RPS)', aiPrediction: 'Pakistan', phase: 'super4' },
 
     // Feb 22
-    { match: 42, date: '22 February', team1: 'TBA', team2: 'TBA', venue: 'Pallekele', phase: 'super4' },
-    { match: 43, date: '22 February', team1: 'TBA', team2: 'TBA', venue: 'Ahmedabad', phase: 'super4' },
+    { match: 42, date: '22 February', team1: 'Sri Lanka', team2: 'England', venue: 'Pallekele', aiPrediction: 'England', phase: 'super4' },
+    { match: 43, date: '22 February', team1: 'India', team2: 'South Africa', venue: 'Ahmedabad', aiPrediction: 'India', phase: 'super4' },
 
     // Feb 23
-    { match: 44, date: '23 February', team1: 'TBA', team2: 'TBA', venue: 'Wankhede, Mumbai', phase: 'super4' },
+    { match: 44, date: '23 February', team1: 'Zimbabwe', team2: 'West Indies', venue: 'Wankhede, Mumbai', aiPrediction: 'West Indies', phase: 'super4' },
 
     // Feb 24
-    { match: 45, date: '24 February', team1: 'TBA', team2: 'TBA', venue: 'Pallekele', phase: 'super4' },
+    { match: 45, date: '24 February', team1: 'England', team2: 'Pakistan', venue: 'Pallekele', aiPrediction: 'England', phase: 'super4' },
 
     // Feb 25
-    { match: 46, date: '25 February', team1: 'TBA', team2: 'TBA', venue: 'Colombo (RPS)', phase: 'super4' },
+    { match: 46, date: '25 February', team1: 'Sri Lanka', team2: 'New Zealand', venue: 'Colombo (RPS)', aiPrediction: 'New Zealand', phase: 'super4' },
 
     // Feb 26
-    { match: 47, date: '26 February', team1: 'TBA', team2: 'TBA', venue: 'Ahmedabad', phase: 'super4' },
-    { match: 48, date: '26 February', team1: 'TBA', team2: 'TBA', venue: 'Chennai', phase: 'super4' },
+    { match: 47, date: '26 February', team1: 'West Indies', team2: 'South Africa', venue: 'Ahmedabad', aiPrediction: 'South Africa', phase: 'super4' },
+    { match: 48, date: '26 February', team1: 'India', team2: 'Zimbabwe', venue: 'Chennai', aiPrediction: 'India', phase: 'super4' },
 
     // Feb 27
-    { match: 49, date: '27 February', team1: 'TBA', team2: 'TBA', venue: 'Colombo (RPS)', phase: 'super4' },
+    { match: 49, date: '27 February', team1: 'England', team2: 'New Zealand', venue: 'Colombo (RPS)', aiPrediction: 'England', phase: 'super4' },
 
     // Feb 28
-    { match: 50, date: '28 February', team1: 'TBA', team2: 'TBA', venue: 'Pallekele', phase: 'super4' },
+    { match: 50, date: '28 February', team1: 'Sri Lanka', team2: 'Pakistan', venue: 'Pallekele', aiPrediction: 'Pakistan', phase: 'super4' },
 
     // Mar 1
-    { match: 51, date: '1 March', team1: 'TBA', team2: 'TBA', venue: 'Delhi', phase: 'super4' },
-    { match: 52, date: '1 March', team1: 'TBA', team2: 'TBA', venue: 'Eden Gardens, Kolkata', phase: 'super4' },
+    { match: 51, date: '1 March', team1: 'Zimbabwe', team2: 'South Africa', venue: 'Delhi', aiPrediction: 'South Africa', phase: 'super4' },
+    { match: 52, date: '1 March', team1: 'India', team2: 'West Indies', venue: 'Eden Gardens, Kolkata', aiPrediction: 'India', phase: 'super4' },
 
     // ============ KNOCKOUTS (Matches 53-55) ============
 
@@ -241,6 +241,9 @@ export const t20WorldCup2026Config: TournamentConfig = {
     aiPredictionsEnabled: true, // AI predictions enabled for group stage
     fetchFixturesFromSheets: true,
   },
+
+  // Special deadline for missing bonus questions makeup submission
+  bonusMakeupDeadline: '2026-02-19T23:59:00', // Adjust this to your desired deadline
 };
 
 export default t20WorldCup2026Config;

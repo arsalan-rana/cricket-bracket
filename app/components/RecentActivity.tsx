@@ -27,12 +27,15 @@ const eventTypeMap: { [key: string]: string } = {
   BRACKET_SUBMITTED: 'Bracket Submitted 🎉',
   BRACKET_UPDATED: 'Bracket Updated 🔄',
   FIXTURE_UPDATED: 'Fixture Updated 🏆',
-  SUPER4_SUBMITTED: 'Super 4 Picks Submitted 🟡',
-  SUPER4_UPDATED: 'Super 4 Picks Updated 🔄',
-  PLAYOFFS_SUBMITTED: 'Super 4 Picks Submitted 🟡',
-  PLAYOFFS_UPDATED: 'Super 4 Picks Updated 🔄',
+  SUPER4_SUBMITTED: 'Super 8 Picks Submitted 🟡',
+  SUPER4_UPDATED: 'Super 8 Picks Updated 🔄',
+  SUPER8_SUBMITTED: 'Super 8 Picks Submitted 🟡',
+  SUPER8_UPDATED: 'Super 8 Picks Updated 🔄',
+  PLAYOFFS_SUBMITTED: 'Super 8 Picks Submitted 🟡',
+  PLAYOFFS_UPDATED: 'Super 8 Picks Updated 🔄',
   CHIP_DOUBLEUP_ACTIVATED: 'Double Up Activated 2️⃣',
-  CHIP_WILDCARD_ACTIVATED: 'Wildcard Activated 🃏'
+  CHIP_WILDCARD_ACTIVATED: 'Wildcard Activated 🃏',
+  BONUS_MAKEUP_SUBMITTED: 'Bonus Makeup Submitted 📝'
   // Add additional mappings as needed.
 };
 

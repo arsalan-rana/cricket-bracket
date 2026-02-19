@@ -127,6 +127,9 @@ export const asiaCup2025Config: TournamentConfig = {
     aiPredictionsEnabled: true,
     fetchFixturesFromSheets: true,
   },
+
+  // Special deadline for missing bonus questions makeup submission
+  bonusMakeupDeadline: '2026-02-20T23:59:00', // Set this to your desired deadline
 };
 
 // Export as default for easy importing

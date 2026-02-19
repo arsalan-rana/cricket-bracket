@@ -160,15 +160,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // For each bonus question, find its row (matching the first column) and update the user's cell.
     bonusQuestions.forEach((question) => {
       // Find the row (skip header row) where the first cell equals the bonus question.
-      const rowIndex = bonusData.findIndex((row, idx) => idx > 0 && row[0] === question);
+      let rowIndex = bonusData.findIndex((row, idx) => idx > 0 && row[0] === question);
+
       if (rowIndex !== -1) {
-        // Ensure the row has enough columns; fill with empty strings if needed.
+        // Row exists - ensure it has enough columns; fill with empty strings if needed.
         while (bonusData[rowIndex].length < bonusUserColIndex + 1) {
           bonusData[rowIndex].push("");
         }
         bonusData[rowIndex][bonusUserColIndex] = bonusAnswers[question] || "";
       } else {
-        console.error(`Bonus question row not found for category: ${question}`);
+        // Row doesn't exist - create it
+        console.warn(`Bonus question row not found for category: ${question}, creating new row`);
+        const newRow = Array(bonusUserColIndex + 1).fill("");
+        newRow[0] = question; // Set category name
+        newRow[bonusUserColIndex] = bonusAnswers[question] || "";
+        bonusData.push(newRow);
       }
     });
 

@@ -95,7 +95,7 @@ const BracketSubmission = () => {
     isLoading: fixturesLoading
   } = useAllFixtures();
 
-  const [tabValue, setTabValue] = useState(0); // Default to Fixture Picks tab
+  const [tabValue, setTabValue] = useState(0); // Will be set based on current phase
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Group stage picks state
@@ -187,6 +187,13 @@ const BracketSubmission = () => {
 
   // For group stage we only lock if the user already finalized their submission.
   const locked = isGroupStagePastDeadline && alreadySubmitted;
+
+  // Set default tab to Super 8 if available, otherwise Fixture Picks
+  useEffect(() => {
+    if (showSuper4Tab && tabValue === 0) {
+      setTabValue(2); // Switch to Super 8 tab when it becomes available
+    }
+  }, [showSuper4Tab]);
 
   // Fetch existing group stage bracket picks on mount
   useEffect(() => {
@@ -935,7 +942,7 @@ const BracketSubmission = () => {
   // Helper to set the FAB button label based on the active tab.
   const getSubmitButtonLabel = () => {
     if (tabValue === 0 || tabValue === 1) return "Submit Bracket";
-    if (tabValue === 2) return "Submit Super 4";
+    if (tabValue === 2) return "Submit Super 8";
     if (tabValue === 3) return "Submit Finals";
   };
 
@@ -1175,7 +1182,7 @@ const BracketSubmission = () => {
         <Tabs value={tabValue} onChange={handleTabChange} aria-label="Bracket Submission Tabs">
           <Tab label="Fixture Picks" {...a11yProps(0)} />
           <Tab label="Bonus Picks" {...a11yProps(1)} />
-          {showSuper4Tab && <Tab label={super4Phase?.name || 'Super 4'} {...a11yProps(2)} />}
+          {showSuper4Tab && <Tab label={super4Phase?.name || 'Super 8'} {...a11yProps(2)} />}
           {showSemifinalsTab && <Tab label={semifinalsPhase?.name || 'Semi-Finals'} {...a11yProps(3)} />}
           {showFinalsTab && <Tab label={finalsPhase?.name || 'Final'} {...a11yProps(showSemifinalsTab ? 4 : 3)} />}
         </Tabs>
@@ -1611,7 +1618,7 @@ const BracketSubmission = () => {
         </Box>
       </TabPanel>
 
-      {/* Super 4 Tab */}
+      {/* Super 8 Tab */}
       {showSuper4Tab && <TabPanel value={tabValue} index={2}>
         {/* Draft Status Banner */}
         {submissionStatus.super8 === 'DRAFT' && (
@@ -1627,7 +1634,7 @@ const BracketSubmission = () => {
 
         {submissionStatus.super8 === 'SUBMITTED' && (
           <Alert severity="success" sx={{ mb: 2 }}>
-            Your Super 4 bracket has been submitted! You can still update it before the deadline.
+            Your Super 8 bracket has been submitted! You can still update it before the deadline.
           </Alert>
         )}
 
