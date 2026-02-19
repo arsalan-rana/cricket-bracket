@@ -4,97 +4,10 @@ import { SessionProvider } from 'next-auth/react';
 import NavBar from './components/NavBar';
 import Script from 'next/script';
 import '../styles/globals.css';
-import { ThemeProvider, CssBaseline, Switch, Box } from '@mui/material';
-import { useState, useEffect, useMemo } from 'react';
+import { ThemeProvider, CssBaseline } from '@mui/material';
 import { createTheme } from '@mui/material/styles';
-import WbSunnyIcon from '@mui/icons-material/WbSunny';
-import Brightness2Icon from '@mui/icons-material/Brightness2';
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
-
-// ICC T20 World Cup 2026 themed light theme
-const lightTheme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: '#10044A', // ICC Navy
-      light: '#1C5D9C', // Lapis Blue
-      dark: '#0A0228',
-    },
-    secondary: {
-      main: '#FF9100', // ICC Orange
-      light: '#FFB74D',
-      dark: '#F57C00',
-    },
-    success: {
-      main: '#02A7D1', // Electric Blue
-    },
-    warning: {
-      main: '#FF9100', // ICC Orange
-    },
-    error: {
-      main: '#DA2C5A', // Cerise Pink
-    },
-    background: {
-      default: '#F5F7FA',
-      paper: '#FFFFFF',
-    },
-    info: {
-      main: '#02A7D1', // Electric Blue
-    },
-  },
-  typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-    h4: {
-      fontWeight: 800,
-      letterSpacing: '-0.03em',
-    },
-    h5: {
-      fontWeight: 700,
-      letterSpacing: '-0.02em',
-    },
-    h6: {
-      fontWeight: 700,
-    },
-    subtitle1: {
-      fontWeight: 600,
-    },
-    button: {
-      fontWeight: 700,
-      textTransform: 'none',
-    },
-  },
-  shape: {
-    borderRadius: 12,
-  },
-  shadows: [
-    'none',
-    '0px 2px 4px rgba(16, 4, 74, 0.08)',
-    '0px 4px 8px rgba(16, 4, 74, 0.12)',
-    '0px 8px 16px rgba(16, 4, 74, 0.16)',
-    '0px 12px 24px rgba(16, 4, 74, 0.20)',
-    '0px 16px 32px rgba(16, 4, 74, 0.24)',
-    '0px 20px 40px rgba(16, 4, 74, 0.28)',
-    '0px 24px 48px rgba(16, 4, 74, 0.32)',
-    '0px 2px 4px rgba(16, 4, 74, 0.08)',
-    '0px 4px 8px rgba(16, 4, 74, 0.12)',
-    '0px 8px 16px rgba(16, 4, 74, 0.16)',
-    '0px 12px 24px rgba(16, 4, 74, 0.20)',
-    '0px 16px 32px rgba(16, 4, 74, 0.24)',
-    '0px 20px 40px rgba(16, 4, 74, 0.28)',
-    '0px 24px 48px rgba(16, 4, 74, 0.32)',
-    '0px 2px 4px rgba(16, 4, 74, 0.08)',
-    '0px 4px 8px rgba(16, 4, 74, 0.12)',
-    '0px 8px 16px rgba(16, 4, 74, 0.16)',
-    '0px 12px 24px rgba(16, 4, 74, 0.20)',
-    '0px 16px 32px rgba(16, 4, 74, 0.24)',
-    '0px 20px 40px rgba(16, 4, 74, 0.28)',
-    '0px 24px 48px rgba(16, 4, 74, 0.32)',
-    '0px 2px 4px rgba(16, 4, 74, 0.08)',
-    '0px 4px 8px rgba(16, 4, 74, 0.12)',
-    '0px 8px 16px rgba(16, 4, 74, 0.16)',
-  ],
-});
 
 const darkTheme = createTheme({
   palette: {
@@ -180,21 +93,6 @@ const darkTheme = createTheme({
 });
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // Initialize with a lazy initializer.
-  const [mode, setMode] = useState<'light' | 'dark'>(() => {
-    if (typeof window !== 'undefined') {
-      const storedMode = localStorage.getItem('themeMode');
-      return storedMode === 'dark' ? 'dark' : 'light';
-    }
-    return 'light';
-  });
-
-  useEffect(() => {
-    localStorage.setItem('themeMode', mode);
-  }, [mode]);
-
-  const theme = useMemo(() => (mode === 'dark' ? darkTheme : lightTheme), [mode]);
-
   return (
     <html lang="en">
       <head>
@@ -217,19 +115,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <SessionProvider>
-          <ThemeProvider theme={theme}>
+          <ThemeProvider theme={darkTheme}>
             <CssBaseline />
             <NavBar />
-            {/* Dark mode toggle positioned at top-left */}
-            <Box sx={{ position: 'fixed', top: 16, left: 16, zIndex: 1300 }}>
-              <Switch
-                checked={mode === 'dark'}
-                onChange={(e) => setMode(e.target.checked ? 'dark' : 'light')}
-                // Always use white icons so they're visible on the black navbar.
-                icon={<WbSunnyIcon sx={{ color: 'white' }} />}
-                checkedIcon={<Brightness2Icon sx={{ color: 'white' }} />}
-              />
-            </Box>
             <div style={{ marginTop: '80px' }}>
               {children}
             </div>
