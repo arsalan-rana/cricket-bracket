@@ -193,6 +193,7 @@ const BracketSubmission = () => {
     if (showSuper4Tab && tabValue === 0) {
       setTabValue(2); // Switch to Super 8 tab when it becomes available
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showSuper4Tab]);
 
   // Fetch existing group stage bracket picks on mount
@@ -217,6 +218,7 @@ const BracketSubmission = () => {
       }
     };
     fetchExistingPicks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   // NEW: Fetch existing playoff and finals picks on mount from the new endpoint
@@ -349,6 +351,7 @@ const BracketSubmission = () => {
         console.error("Error restoring draft from localStorage:", error);
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session]);
 
   // Determine current phase based on active tab

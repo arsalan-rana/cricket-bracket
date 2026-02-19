@@ -216,7 +216,7 @@ const BonusMakeupPage = () => {
         </Typography>
 
         <Alert severity="info" sx={{ mb: 3 }}>
-          Due to a technical issue, the original bonus submission didn't capture picks for "Top Scorer" and "Top Wicket-taker".
+          Due to a technical issue, the original bonus submission didn&apos;t capture picks for &quot;Top Scorer&quot; and &quot;Top Wicket-taker&quot;.
           Since everyone has seen the matches equally, you can now submit these two bonus picks.
         </Alert>
 

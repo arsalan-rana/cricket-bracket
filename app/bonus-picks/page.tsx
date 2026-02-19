@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useSession, signIn } from 'next-auth/react';
 import {
   Accordion,
@@ -86,7 +86,7 @@ const AllBonusPicksAllPage = () => {
   };
 
   // Fetch bonus picks from the API endpoint.
-  const fetchBonusPicks = async () => {
+  const fetchBonusPicks = useCallback(async () => {
     setLoading(true);
     try {
       // Call the endpoint without a name parameter so it returns bonus picks for all players.
@@ -106,7 +106,7 @@ const AllBonusPicksAllPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Transform bonusPicks from a player-keyed mapping to a category-keyed mapping,
   // filtering out any key that is "WINNERS".
@@ -131,7 +131,7 @@ const AllBonusPicksAllPage = () => {
     if (session) {
       fetchBonusPicks();
     }
-  }, [session]);
+  }, [session, fetchBonusPicks]);
 
   useEffect(() => {
     if (Object.keys(bonusPicks).length > 0) {
