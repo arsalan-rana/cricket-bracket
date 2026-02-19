@@ -220,14 +220,23 @@ function calculateLeaderboard(
   }
 
   // Build submission time mapping from linksData.
+  // Only use group-stage entries so the displayed timestamp matches the one used for penalty calculation.
   if (linksData && linksData.length > 0) {
     const linksHeader = linksData[0];
-    const nameIndex = linksHeader.indexOf('Players');
-    const timestampIndex = linksHeader.indexOf('Timestamp of submission');
+    const nameIndex = linksHeader.indexOf('Players') >= 0 ? linksHeader.indexOf('Players') : 0;
+    const timestampIndex = linksHeader.indexOf('Timestamp of submission') >= 0 ? linksHeader.indexOf('Timestamp of submission') : 1;
+    const statusIndex = timestampIndex + 1; // status is always the column after timestamp
+    console.log('[Leaderboard] Links header:', linksHeader, '| nameIndex:', nameIndex, '| timestampIndex:', timestampIndex, '| statusIndex:', statusIndex);
     for (let i = 1; i < linksData.length; i++) {
       const row = linksData[i];
       const playerName = row[nameIndex];
       const timestamp = row[timestampIndex];
+      const status = (row[statusIndex] || '').trim();
+      // Skip non-group-stage entries so Super 8/Finals timestamps don't overwrite
+      if (status && status !== 'SUBMITTED' && status !== 'DRAFT') {
+        console.log(`[Leaderboard] Skipping ${playerName} (status=${status})`);
+        continue;
+      }
       if (playerName && timestamp) {
         initPlayer(playerName); // ensure player exists before setting timestamp
         players[playerName].timestamp = timestamp;
@@ -304,7 +313,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       sheets.spreadsheets.values.get({ spreadsheetId, range: 'Playoffs!A1:Z1000' }).catch(() => ({ data: { values: [] } })),
       sheets.spreadsheets.values.get({ spreadsheetId, range: `${config.sheets.finals}!A1:Z1000` }).catch(() => ({ data: { values: [] } })),
       sheets.spreadsheets.values.get({ spreadsheetId, range: `${config.sheets.bonusesOverview}!A1:Z1000` }),
-      sheets.spreadsheets.values.get({ spreadsheetId, range: 'Links!A:B' }),
+      sheets.spreadsheets.values.get({ spreadsheetId, range: 'Links!A:C' }),
       sheets.spreadsheets.values.get({ spreadsheetId, range: `${config.sheets.chips}!A:C` }).catch(() => ({ data: { values: [] } }))
     ]);
 
@@ -364,15 +373,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Build submission times mapping from linksData.
+    // Only use group-stage entries (status empty, 'SUBMITTED', or 'DRAFT').
+    // Rows with 'SUPER8_*' or other prefixes are from later phases and must be excluded
+    // to avoid applying late-submission penalties based on Super 8 timestamps.
     const submissionTimeMap: { [player: string]: DateTime } = {};
     if (linksData && linksData.length > 0) {
       const linksHeader = linksData[0];
-      const nameIndex = linksHeader.indexOf('Players');
-      const timestampIndex = linksHeader.indexOf('Timestamp of submission');
+      const nameIndex = linksHeader.indexOf('Players') >= 0 ? linksHeader.indexOf('Players') : 0;
+      const timestampIndex = linksHeader.indexOf('Timestamp of submission') >= 0 ? linksHeader.indexOf('Timestamp of submission') : 1;
+      const statusIndex = timestampIndex + 1; // status is always the column after timestamp
       for (let i = 1; i < linksData.length; i++) {
         const row = linksData[i];
         const playerName = row[nameIndex];
         const timestampStr = row[timestampIndex];
+        const status = (row[statusIndex] || '').trim();
+        // Skip any non-group-stage entries (Super 8, Finals, Bonus, etc.)
+        if (status && status !== 'SUBMITTED' && status !== 'DRAFT') {
+          continue;
+        }
         if (playerName && timestampStr) {
           submissionTimeMap[playerName] = DateTime.fromFormat(timestampStr, "yyyy-MM-dd HH:mm:ss", { zone: "America/New_York" });
         }

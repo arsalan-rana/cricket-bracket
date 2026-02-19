@@ -119,7 +119,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     // Step 5: Append a row to "Links" tab with player's name, EST timestamp, and status
-    const status = isDraft ? 'DRAFT' : 'SUBMITTED';
+    // Use SUPER8_ prefix so leaderboard can distinguish from group stage submissions
+    const status = isDraft ? 'SUPER8_DRAFT' : 'SUPER8_SUBMITTED';
     await sheets.spreadsheets.values.append({
       spreadsheetId: process.env.GOOGLE_SHEET_ID!,
       range: 'Links!A:C',
