@@ -2,6 +2,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getSession } from 'next-auth/react';
 import { google } from 'googleapis';
+import { getConfig } from '@/lib/tournament';
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
 
@@ -50,14 +51,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     };
 
+    const config = getConfig();
+
     // Fetch sheets with error handling
     const [groupStage, super4, playoffs, links, bonuses, finals] = await Promise.all([
-      fetchSheetData('Predictions Overview!A1:Z1000'),
-      fetchSheetData('Super 4!A1:Z1000'),
+      fetchSheetData(`${config.sheets.predictionsOverview}!A1:Z1000`),
+      fetchSheetData(`${config.sheets.super4}!A1:Z1000`),
       fetchSheetData('Playoffs!A1:Z1000'),
       fetchSheetData('Links!A1:C1000'),
-      fetchSheetData('Bonuses Overview!A1:Z1000'),
-      fetchSheetData('Finals!A1:Z1000'),
+      fetchSheetData(`${config.sheets.bonusesOverview}!A1:Z1000`),
+      fetchSheetData(`${config.sheets.finals}!A1:Z1000`),
     ]);
 
     return res.status(200).json({

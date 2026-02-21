@@ -673,12 +673,10 @@ const Fixtures = () => {
     );
   }
 
-  // Determine current time and phase start times from config
+  // Determine current time for finals gate
   const nowEastern = getNow();
   const deadlines = getAllDeadlines();
-  const super4Start = deadlines.super4;
   const finalsStart = deadlines.finals;
-  const showSuper4 = nowEastern >= super4Start;
   const showFinals = nowEastern >= finalsStart;
 
   return (
@@ -709,8 +707,8 @@ const Fixtures = () => {
         </Box>
       )}
 
-      {/* Super 4 Section - only show if the current time is past the Super 4 start time */}
-      {showSuper4 && super4Fixtures.length > 0 && (
+      {/* Super 8 Section */}
+      {super4Fixtures.length > 0 && (
         <Box sx={{ mb: 4 }}>
           <Typography variant="h5" gutterBottom>
             {super4Phase?.name || 'Super 4'}
