@@ -55,8 +55,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.warn(`Could not fetch ${super8SheetName} tab — it may not exist yet:`, err);
     }
 
-    // Fetch Finals picks — fail gracefully if tab doesn't exist yet
+    // Fetch Finals sheet picks (contains both semi-finals rows 53-54 and final row 55)
     const finalsSheetName = config.sheets.finals;
+    const semifinalsPicks: { [match: number]: string } = {};
     const finalsPicks: { [match: number]: string } = {};
     try {
       const finalsResponse = await sheets.spreadsheets.values.get({
@@ -68,10 +69,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const finalsHeaders = finalsData[0];
         const finalsUserColIndex = finalsHeaders.indexOf(name);
         if (finalsUserColIndex !== -1) {
-          const finalsOffset = getMatchOffset('finals');
+          const finalsOffset = getMatchOffset('finals'); // offset = 52 (matchRange.start 53 - 1)
+          const semisPhase = config.phases.find(p => p.id === 'semifinals');
           for (let i = 1; i < finalsData.length; i++) {
             if (finalsData[i] && finalsData[i][finalsUserColIndex]) {
-              finalsPicks[i + finalsOffset] = finalsData[i][finalsUserColIndex];
+              const matchNum = i + finalsOffset;
+              const pick = finalsData[i][finalsUserColIndex];
+              // Split into semis vs finals based on phase matchRange
+              if (semisPhase && matchNum >= semisPhase.matchRange.start && matchNum <= semisPhase.matchRange.end) {
+                semifinalsPicks[matchNum] = pick;
+              } else {
+                finalsPicks[matchNum] = pick;
+              }
             }
           }
         }
@@ -80,9 +89,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       console.warn(`Could not fetch ${finalsSheetName} tab — it may not exist yet:`, err);
     }
 
-    console.log('Super 8 picks for', name, ':', playoffsPicks);
-
-    return res.status(200).json({ playoffsPicks, finalsPicks });
+    return res.status(200).json({ playoffsPicks, semifinalsPicks, finalsPicks });
   } catch (error) {
     console.error('Error fetching playoff bracket picks:', error);
     return res.status(500).json({ error: 'Error fetching data' });

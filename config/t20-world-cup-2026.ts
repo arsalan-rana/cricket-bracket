@@ -41,15 +41,15 @@ export const t20WorldCup2026Config: TournamentConfig = {
       name: 'Semi-Finals',
       sheetName: 'Semi-Finals',
       matchRange: { start: 53, end: 54 },
-      deadline: '2026-03-03T08:00:00', // Before first semi-final
+      deadline: '2026-03-04T08:00:00', // Before first semi-final (March 4)
       scoringType: 'pool',
       poolSize: 160,
     },
     {
       id: 'finals',
       name: 'Final',
-      sheetName: 'Final',
-      matchRange: { start: 55, end: 55 },
+      sheetName: 'Finals',
+      matchRange: { start: 53, end: 55 },
       deadline: '2026-03-08T08:00:00', // Before final
       scoringType: 'pool',
       poolSize: 260,
@@ -162,8 +162,8 @@ export const t20WorldCup2026Config: TournamentConfig = {
     // ============ KNOCKOUTS (Matches 53-55) ============
 
     // Semi-finals
-    { match: 53, date: '3 March', team1: 'TBA', team2: 'TBA', venue: 'TBA', phase: 'semifinals' },
-    { match: 54, date: '5 March', team1: 'TBA', team2: 'TBA', venue: 'Wankhede, Mumbai', phase: 'semifinals' },
+    { match: 53, date: '4 March', team1: 'South Africa', team2: 'New Zealand', venue: 'Eden Gardens, Kolkata', aiPrediction: 'South Africa', phase: 'semifinals' },
+    { match: 54, date: '5 March', team1: 'India', team2: 'England', venue: 'Wankhede, Mumbai', aiPrediction: 'India', phase: 'semifinals' },
 
     // Final
     { match: 55, date: '8 March', team1: 'TBA', team2: 'TBA', venue: 'TBA', phase: 'finals' },
@@ -226,7 +226,7 @@ export const t20WorldCup2026Config: TournamentConfig = {
     predictionsOverview: 'Predictions Overview',
     super4: 'Super 8',
     semifinals: 'Semi-Finals',
-    finals: 'Final',
+    finals: 'Finals',
     bonusesOverview: 'Bonuses Overview',
     activityLog: 'Activity Log',
     links: 'Links',

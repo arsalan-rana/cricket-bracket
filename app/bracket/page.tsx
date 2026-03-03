@@ -182,19 +182,21 @@ const BracketSubmission = () => {
 
   // Show tabs based on deadlines
   const showSuper4Tab = isGroupStagePastDeadline;
-  const showSemifinalsTab = semifinalsPhase && isSemifinalsPastDeadline;
+  const showSemifinalsTab = semifinalsPhase && isPlayoffsPastDeadline;
   const showFinalsTab = isFinalsPastDeadline;
 
   // For group stage we only lock if the user already finalized their submission.
   const locked = isGroupStagePastDeadline && alreadySubmitted;
 
-  // Set default tab to Super 8 if available, otherwise Fixture Picks
+  // Set default tab based on current phase
   useEffect(() => {
-    if (showSuper4Tab && tabValue === 0) {
+    if (showSemifinalsTab) {
+      setTabValue(3); // Switch to Semi-Finals tab when it becomes available
+    } else if (showSuper4Tab && tabValue === 0) {
       setTabValue(2); // Switch to Super 8 tab when it becomes available
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showSuper4Tab]);
+  }, [showSuper4Tab, showSemifinalsTab]);
 
   // Fetch existing group stage bracket picks on mount
   useEffect(() => {
@@ -231,8 +233,8 @@ const BracketSubmission = () => {
         });
         const data = await response.json();
         if (response.ok) {
-          console.log('Fetched Super 8 picks:', data.playoffsPicks);
           setPlayoffsPredictions(data.playoffsPicks || {});
+          setSemifinalsPredictions(data.semifinalsPicks || {});
           setFinalsPredictions(data.finalsPicks || {});
         } else {
           console.error('Error response:', data);
@@ -439,7 +441,7 @@ const BracketSubmission = () => {
   };
 
   // Save draft handler
-  const handleSaveDraft = async (phase: 'group-stage' | 'super8' | 'finals') => {
+  const handleSaveDraft = async (phase: 'group-stage' | 'super8' | 'semifinals' | 'finals') => {
     if (!session?.user?.name) return;
 
     setIsSubmitting(true);
@@ -455,6 +457,9 @@ const BracketSubmission = () => {
       } else if (phase === 'super8') {
         endpoint = '/api/submit-playoffs';
         payload.picks = playoffsPredictions;
+      } else if (phase === 'semifinals') {
+        endpoint = '/api/submit-semifinals';
+        payload.picks = semifinalsPredictions;
       } else if (phase === 'finals') {
         endpoint = '/api/submit-finals';
         payload.picks = finalsPredictions;
@@ -621,6 +626,31 @@ const BracketSubmission = () => {
     }
   };
 
+  const doSubmitSemifinals = async () => {
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/submit-semifinals', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          name: session?.user?.name,
+          picks: semifinalsPredictions,
+          isDraft: false,
+        }),
+      });
+      if (response.ok) {
+        showSnackbar("Your semi-finals bracket has been submitted successfully!", "success");
+      } else {
+        showSnackbar("Failed to submit your semi-finals bracket. Please try again.", "error");
+      }
+    } catch (error) {
+      showSnackbar("An error occurred while submitting semi-finals bracket. Please try again.", "error");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const doSubmitFinals = async () => {
     setIsSubmitting(true);
     try {
@@ -689,9 +719,20 @@ const BracketSubmission = () => {
         return;
       }
       doSubmitPlayoffs();
-    } else if (tabValue === 3) {
+    } else if (showSemifinalsTab && tabValue === 3) {
+      // Semi-finals submission
+      if (Object.keys(semifinalsPredictions).length !== semifinalsFixtures.length) {
+        showSnackbar("Please predict the winner for all semi-final matches before submitting.", "error");
+        return;
+      }
+      if (isSemifinalsPastDeadline) {
+        showSnackbar("Semi-finals submission is locked. You cannot modify your submission.", "error");
+        return;
+      }
+      doSubmitSemifinals();
+    } else if (showFinalsTab && tabValue === (showSemifinalsTab ? 4 : 3)) {
       // Finals submission
-      if (!finalsFixtures[0].team1 || !finalsFixtures[0].team2) {
+      if (!finalsFixtures[0]?.team1 || !finalsFixtures[0]?.team2) {
         showSnackbar("Finals are not available yet.", "error");
         return;
       }
@@ -951,7 +992,8 @@ const BracketSubmission = () => {
   const getSubmitButtonLabel = () => {
     if (tabValue === 0 || tabValue === 1) return "Submit Bracket";
     if (tabValue === 2) return "Submit Super 8";
-    if (tabValue === 3) return "Submit Finals";
+    if (showSemifinalsTab && tabValue === 3) return "Submit Semi-Finals";
+    if (showFinalsTab && tabValue === (showSemifinalsTab ? 4 : 3)) return "Submit Finals";
   };
 
   return (
@@ -1922,8 +1964,275 @@ const BracketSubmission = () => {
         })}
       </TabPanel>}
 
+      {/* Semi-Finals Tab */}
+      {showSemifinalsTab && <TabPanel value={tabValue} index={3}>
+        {!isSemifinalsPastDeadline && semifinalsFixtures.length > 0 && (
+          <Box
+            sx={{
+              position: 'fixed',
+              top: { xs: 104, sm: 112 },
+              left: 0,
+              right: 0,
+              zIndex: 1000,
+              bgcolor: 'background.paper',
+              py: 1,
+              px: { xs: 2, sm: 3 },
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              backdropFilter: 'blur(10px)',
+              backgroundColor: theme.palette.mode === 'dark'
+                ? 'rgba(30, 30, 30, 0.95)'
+                : 'rgba(255, 255, 255, 0.95)',
+            }}
+          >
+            <Box sx={{ maxWidth: 'sm', mx: 'auto' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
+                  Progress: {Object.keys(semifinalsPredictions).length} of {semifinalsFixtures.length} picks
+                </Typography>
+                <Typography variant="caption" color="text.secondary" fontWeight="bold">
+                  {Math.round((Object.keys(semifinalsPredictions).length / semifinalsFixtures.length) * 100)}%
+                </Typography>
+              </Box>
+              <Box sx={{ width: '100%', height: { xs: 6, sm: 8 }, bgcolor: 'action.hover', borderRadius: 1 }}>
+                <Box
+                  sx={{
+                    width: `${(Object.keys(semifinalsPredictions).length / semifinalsFixtures.length) * 100}%`,
+                    height: '100%',
+                    bgcolor: 'primary.main',
+                    borderRadius: 1,
+                    transition: 'width 0.3s ease-in-out'
+                  }}
+                />
+              </Box>
+            </Box>
+          </Box>
+        )}
+
+        {!isSemifinalsPastDeadline && semifinalsFixtures.length > 0 && <Box sx={{ height: 68 }} />}
+
+        {semifinalsFixtures.map((fixture) => {
+          const matchInfo = getPhaseForMatch(fixture.match) || {
+            name: 'Match',
+            color: '#9C27B0',
+            icon: '🔥'
+          };
+
+          return (
+            <Box
+              key={fixture.match}
+              sx={{
+                width: '100%',
+                maxWidth: '100%',
+                overflow: 'hidden',
+                px: { xs: 0.5, sm: 0 },
+                boxSizing: 'border-box'
+              }}
+            >
+              <Paper sx={{
+                p: { xs: 0.8, sm: 3 },
+                mx: { xs: 0, sm: 0 },
+                my: { xs: 1, sm: 3 },
+                textAlign: 'center',
+                borderRadius: { xs: 2, sm: 3 },
+                boxShadow: theme.palette.mode === 'dark'
+                  ? '0 4px 20px rgba(0,0,0,0.3)'
+                  : '0 4px 20px rgba(0,0,0,0.1)',
+                background: theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, #2A2A2A 0%, #1E1E1E 100%)'
+                  : 'linear-gradient(135deg, #FAFAFA 0%, #F5F5F5 100%)',
+                transition: 'all 0.3s ease-in-out',
+                width: { xs: '100%', sm: 'auto' },
+                maxWidth: { xs: '100%', sm: 'none' },
+                overflow: 'hidden',
+                boxSizing: 'border-box',
+                position: 'relative',
+                '&:hover': {
+                  boxShadow: theme.palette.mode === 'dark'
+                    ? '0 8px 30px rgba(0,0,0,0.4)'
+                    : '0 8px 30px rgba(0,0,0,0.15)',
+                  transform: { xs: 'none', sm: 'translateY(-2px)' },
+                },
+              }}>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  mb={2}
+                  sx={{ width: '100%', maxWidth: '100%', overflow: 'hidden', px: { xs: 0, sm: 0 } }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 700,
+                      flex: 1,
+                      fontSize: { xs: '1rem', sm: '1.25rem' },
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    Match {fixture.match} - {fixture.date}
+                  </Typography>
+                  <Chip
+                    label={`${matchInfo.icon} ${matchInfo.name}`}
+                    size="small"
+                    sx={{
+                      backgroundColor: matchInfo.color,
+                      color: 'white',
+                      fontWeight: 600,
+                      fontSize: { xs: '0.7rem', sm: '0.8rem' },
+                      height: { xs: 24, sm: 32 },
+                      px: { xs: 0.5, sm: 1 },
+                      flexShrink: 0,
+                      ml: { xs: 0.5, sm: 1 }
+                    }}
+                  />
+                </Box>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: { xs: 0.5, sm: 2 },
+                    alignItems: { xs: 'stretch', sm: 'center' },
+                    justifyContent: { xs: 'stretch', sm: 'center' },
+                    width: '100%',
+                    maxWidth: '100%',
+                    px: { xs: 0, sm: 1 },
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Button
+                    variant={semifinalsPredictions[fixture.match] === fixture.team1 ? "contained" : "outlined"}
+                    onClick={() => handleSemifinalsSelection(fixture.match, fixture.team1)}
+                    disabled={isSemifinalsPastDeadline}
+                    sx={{
+                      width: { xs: '100%', sm: 'auto' },
+                      minWidth: { xs: 'auto', sm: 120 },
+                      maxWidth: { xs: '100%', sm: 'none' },
+                      height: { xs: 42, sm: 48 },
+                      borderRadius: { xs: 2, sm: 3 },
+                      fontWeight: 600,
+                      fontSize: { xs: '0.8rem', sm: '1rem' },
+                      px: { xs: 1, sm: 2 },
+                      boxSizing: 'border-box',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      backgroundColor: semifinalsPredictions[fixture.match] === fixture.team1
+                        ? teamColors[fixture.team1]?.primary || theme.palette.primary.main
+                        : 'transparent',
+                      color: semifinalsPredictions[fixture.match] === fixture.team1
+                        ? teamColors[fixture.team1]?.secondary || 'white'
+                        : theme.palette.mode === 'dark'
+                          ? theme.palette.text.primary
+                          : teamColors[fixture.team1]?.primary || theme.palette.primary.main,
+                      borderColor: theme.palette.mode === 'dark'
+                        ? theme.palette.primary.main
+                        : teamColors[fixture.team1]?.primary || theme.palette.primary.main,
+                      borderWidth: 2,
+                      '&:hover': {
+                        backgroundColor: semifinalsPredictions[fixture.match] === fixture.team1
+                          ? teamColors[fixture.team1]?.primary || theme.palette.primary.main
+                          : theme.palette.mode === 'dark'
+                            ? `${theme.palette.primary.main}20`
+                            : `${teamColors[fixture.team1]?.primary || theme.palette.primary.main}15`,
+                        borderWidth: 2,
+                      },
+                    }}
+                  >
+                    {fixture.team1}
+                  </Button>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      fontWeight: 'bold',
+                      color: 'text.secondary',
+                      mx: { xs: 0, sm: 2 },
+                      my: { xs: 0.3, sm: 0 },
+                      fontSize: { xs: '0.9rem', sm: '1.5rem' },
+                      textAlign: 'center',
+                    }}
+                  >
+                    vs
+                  </Typography>
+                  <Button
+                    variant={semifinalsPredictions[fixture.match] === fixture.team2 ? "contained" : "outlined"}
+                    onClick={() => handleSemifinalsSelection(fixture.match, fixture.team2)}
+                    disabled={isSemifinalsPastDeadline}
+                    sx={{
+                      width: { xs: '100%', sm: 'auto' },
+                      minWidth: { xs: 'auto', sm: 120 },
+                      maxWidth: { xs: '100%', sm: 'none' },
+                      height: { xs: 42, sm: 48 },
+                      borderRadius: { xs: 2, sm: 3 },
+                      fontWeight: 600,
+                      fontSize: { xs: '0.8rem', sm: '1rem' },
+                      px: { xs: 1, sm: 2 },
+                      boxSizing: 'border-box',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      backgroundColor: semifinalsPredictions[fixture.match] === fixture.team2
+                        ? teamColors[fixture.team2]?.primary || theme.palette.primary.main
+                        : 'transparent',
+                      color: semifinalsPredictions[fixture.match] === fixture.team2
+                        ? teamColors[fixture.team2]?.secondary || 'white'
+                        : theme.palette.mode === 'dark'
+                          ? theme.palette.text.primary
+                          : teamColors[fixture.team2]?.primary || theme.palette.primary.main,
+                      borderColor: theme.palette.mode === 'dark'
+                        ? theme.palette.primary.main
+                        : teamColors[fixture.team2]?.primary || theme.palette.primary.main,
+                      borderWidth: 2,
+                      '&:hover': {
+                        backgroundColor: semifinalsPredictions[fixture.match] === fixture.team2
+                          ? teamColors[fixture.team2]?.primary || theme.palette.primary.main
+                          : theme.palette.mode === 'dark'
+                            ? `${theme.palette.primary.main}20`
+                            : `${teamColors[fixture.team2]?.primary || theme.palette.primary.main}15`,
+                        borderWidth: 2,
+                      },
+                    }}
+                  >
+                    {fixture.team2}
+                  </Button>
+                </Box>
+                <Button
+                  variant="text"
+                  color="secondary"
+                  size="small"
+                  onClick={() => toggleDetails(fixture.match)}
+                  endIcon={detailsOpen[fixture.match] ? <ExpandLess /> : <ExpandMore />}
+                  sx={{ mt: 2 }}
+                >
+                  Details
+                </Button>
+                <Collapse in={detailsOpen[fixture.match]}>
+                  <Box
+                    mt={2}
+                    p={2}
+                    borderRadius={2}
+                    sx={{
+                      bgcolor: theme.palette.mode === 'dark'
+                        ? 'rgba(255,255,255,0.05)'
+                        : '#f5f5f5'
+                    }}
+                  >
+                    <Typography variant="body2" color="text.primary">
+                      <strong>📍 Venue:</strong> {fixture.venue}
+                    </Typography>
+                  </Box>
+                </Collapse>
+              </Paper>
+            </Box>
+          );
+        })}
+      </TabPanel>}
+
       {/* Finals Tab */}
-      {showFinalsTab && <TabPanel value={tabValue} index={3}>
+      {showFinalsTab && <TabPanel value={tabValue} index={showSemifinalsTab ? 4 : 3}>
         {/* Draft Status Banner */}
         {submissionStatus.finals === 'DRAFT' && (
           <Alert severity="warning" sx={{ mb: 2 }}>
@@ -2088,6 +2397,40 @@ const BracketSubmission = () => {
           <Fab
             variant="extended"
             onClick={() => handleSaveDraft('super8')}
+            disabled={isSubmitting}
+            sx={{
+              position: 'fixed',
+              bottom: 90,
+              right: 16,
+              zIndex: 1000,
+              background: 'linear-gradient(135deg, #FF9100 0%, #02A7D1 100%)',
+              color: 'white',
+              fontWeight: 700,
+              px: 3,
+              borderRadius: 6,
+              boxShadow: '0 8px 24px rgba(255, 145, 0, 0.35)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #E68100 0%, #0196C0 100%)',
+                transform: 'translateY(-3px) scale(1.05)',
+                boxShadow: '0 12px 32px rgba(255, 145, 0, 0.45)',
+              },
+              '&:active': {
+                transform: 'translateY(-1px) scale(1.02)',
+              },
+            }}
+          >
+            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : <SaveIcon sx={{ mr: 1 }} />}
+            Save Draft
+          </Fab>
+        </Tooltip>
+      )}
+
+      {(showSemifinalsTab && tabValue === 3 && !isSemifinalsPastDeadline) && (
+        <Tooltip title="Save incomplete picks" arrow>
+          <Fab
+            variant="extended"
+            onClick={() => handleSaveDraft('semifinals')}
             disabled={isSubmitting}
             sx={{
               position: 'fixed',
