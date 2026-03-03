@@ -41,7 +41,7 @@ export const t20WorldCup2026Config: TournamentConfig = {
       name: 'Semi-Finals',
       sheetName: 'Semi-Finals',
       matchRange: { start: 53, end: 54 },
-      deadline: '2026-03-04T08:00:00', // Before first semi-final (March 4)
+      deadline: '2026-03-04T08:29:00', // Before first semi-final (March 4)
       scoringType: 'pool',
       poolSize: 160,
     },

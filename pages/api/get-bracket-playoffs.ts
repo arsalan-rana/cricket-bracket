@@ -1,14 +1,15 @@
 // pages/api/get-bracket-playoffs.ts
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getSession } from 'next-auth/react';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../pages/api/auth/[...nextauth]';
 import { google } from 'googleapis';
 import { getMatchOffset, getConfig } from '@/lib/tournament';
 
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly'];
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const session = await getSession({ req });
-  
+  const session = await getServerSession(req, res, authOptions);
+
   if (!session) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
@@ -65,9 +66,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         range: `${finalsSheetName}!A1:Z1000`,
       });
       const finalsData = finalsResponse.data.values;
+      console.log(`[get-bracket-playoffs] Finals sheet "${finalsSheetName}" rows: ${finalsData?.length ?? 0}`);
       if (finalsData && finalsData.length > 0) {
         const finalsHeaders = finalsData[0];
         const finalsUserColIndex = finalsHeaders.indexOf(name);
+        console.log(`[get-bracket-playoffs] Finals headers: ${JSON.stringify(finalsHeaders)}, user "${name}" at col ${finalsUserColIndex}`);
         if (finalsUserColIndex !== -1) {
           const finalsOffset = getMatchOffset('finals'); // offset = 52 (matchRange.start 53 - 1)
           const semisPhase = config.phases.find(p => p.id === 'semifinals');
@@ -75,6 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             if (finalsData[i] && finalsData[i][finalsUserColIndex]) {
               const matchNum = i + finalsOffset;
               const pick = finalsData[i][finalsUserColIndex];
+              console.log(`[get-bracket-playoffs] Row ${i}: match ${matchNum}, pick: ${pick}`);
               // Split into semis vs finals based on phase matchRange
               if (semisPhase && matchNum >= semisPhase.matchRange.start && matchNum <= semisPhase.matchRange.end) {
                 semifinalsPicks[matchNum] = pick;
@@ -86,7 +90,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
     } catch (err) {
-      console.warn(`Could not fetch ${finalsSheetName} tab — it may not exist yet:`, err);
+      console.error(`[get-bracket-playoffs] Could not fetch "${finalsSheetName}" tab:`, err);
     }
 
     return res.status(200).json({ playoffsPicks, semifinalsPicks, finalsPicks });

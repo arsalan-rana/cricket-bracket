@@ -11,6 +11,7 @@ const DeadlineCountdown = () => {
   const deadlines = useMemo(() => getAllDeadlines(), []);
   const groupStageDeadline = deadlines.groupStage;
   const super4Deadline = deadlines.super4;
+  const semifinalsDeadline = deadlines.semifinals;
   const finalsDeadline = deadlines.finals;
 
   // Determine current deadline and phase
@@ -23,7 +24,10 @@ const DeadlineCountdown = () => {
     currentPhase = 'group stage bracket';
   } else if (now < super4Deadline) {
     currentDeadline = super4Deadline;
-    currentPhase = 'Super 4 picks';
+    currentPhase = 'Super 8 picks';
+  } else if (semifinalsDeadline && now < semifinalsDeadline) {
+    currentDeadline = semifinalsDeadline;
+    currentPhase = 'Semi-Finals picks';
   } else if (now < finalsDeadline) {
     currentDeadline = finalsDeadline;
     currentPhase = 'Finals pick';

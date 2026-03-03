@@ -862,9 +862,7 @@ const BracketSubmission = () => {
           const updatedSemifinalsPicks = { ...semifinalsPredictions, [fixture.match]: newPick };
           setSemifinalsPredictions(updatedSemifinalsPicks);
 
-          // For semifinals, we might use the same finals API endpoint or create a new one
-          // For now, using finals endpoint as semifinals shares the same sheet structure
-          const bracketResponse = await fetch('/api/submit-finals', {
+          const bracketResponse = await fetch('/api/submit-semifinals', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',

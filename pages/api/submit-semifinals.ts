@@ -99,6 +99,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // Step 4: Write back to sheet
+    console.log(`[submit-semifinals] Writing for "${name}", offset=${offset}, picks:`, JSON.stringify(picks));
+    console.log(`[submit-semifinals] userColumnIndex=${userColumnIndex}, total rows to write: ${updatedData.length}`);
     await sheets.spreadsheets.values.update({
       spreadsheetId: process.env.GOOGLE_SHEET_ID!,
       range: `${sheetName}!A1:Z1000`,

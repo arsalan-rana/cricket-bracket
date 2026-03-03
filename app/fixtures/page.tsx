@@ -24,7 +24,7 @@ import { DateTime } from 'luxon';
 import { SelectChangeEvent } from '@mui/material';
 
 // Import tournament configuration utilities
-import { teamColors, teamFlags, getAllDeadlines, getNow, getConfig, getPhaseForMatch } from '@/lib/useTournament';
+import { teamColors, teamFlags, getAllDeadlines, getNow, getConfig, getPhaseForMatch, isPhasePastDeadline } from '@/lib/useTournament';
 
 // Admin email from environment (public for client-side)
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
@@ -601,11 +601,13 @@ const transformDataForFixturesGroupStage = (data: any[][] | undefined): Fixture[
   return [...completedFixtures, ...nextDayMatches].reverse();
 };
 
+
 const Fixtures = () => {
   const { data: session, status } = useSession();
   const config = getConfig();
   const [groupStageFixtures, setGroupStageFixtures] = useState<Fixture[]>([]);
   const [super4Fixtures, setSuper4Fixtures] = useState<Fixture[]>([]);
+  const [semifinalsFixtures, setSemifinalsFixtures] = useState<Fixture[]>([]);
   const [finalsFixtures, setFinalsFixtures] = useState<Fixture[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, message: '', severity: 'success' });
@@ -613,20 +615,34 @@ const Fixtures = () => {
   // Get phase names from config
   const groupStagePhase = config.phases.find((p) => p.id === 'group-stage');
   const super4Phase = config.phases.find((p) => p.id === 'super4');
+  const semifinalsPhase = config.phases.find((p) => p.id === 'semifinals');
   const finalsPhase = config.phases.find((p) => p.id === 'finals');
 
   const fetchData = async () => {
     try {
-      const response = await fetch('/api/sheets', { cache: 'no-store' });
-      const result = await response.json();
-      if (response.ok) {
-        // Use new transform function for group stage (shows all next day matches)
+      const [sheetsResponse, semisResponse] = await Promise.all([
+        fetch('/api/sheets', { cache: 'no-store' }),
+        fetch('/api/get-fixtures?phase=semifinals', { cache: 'no-store' }),
+      ]);
+      const result = await sheetsResponse.json();
+      if (sheetsResponse.ok) {
         setGroupStageFixtures(transformDataForFixturesGroupStage(result.groupStage));
-        // Use original transform for Super 8 and Finals (shows only next match)
         setSuper4Fixtures(transformDataForFixtures(result.super4));
         setFinalsFixtures(transformDataForFixtures(result.finals));
       } else {
         setError(result.error || 'An error occurred while fetching data');
+      }
+      if (semisResponse.ok) {
+        const semisData = await semisResponse.json();
+        const fixtures: Fixture[] = (semisData.fixtures || []).map((f: any) => ({
+          date: f.date,
+          match: String(f.match),
+          team1: f.team1,
+          team2: f.team2,
+          winner: '',
+          picks: {},
+        }));
+        setSemifinalsFixtures(fixtures);
       }
     } catch (err) {
       if (err instanceof Error) {
@@ -673,18 +689,18 @@ const Fixtures = () => {
     );
   }
 
-  // Determine current time for finals gate
+  // Determine current time for section gates
   const nowEastern = getNow();
   const deadlines = getAllDeadlines();
-  const finalsStart = deadlines.finals;
-  const showFinals = nowEastern >= finalsStart;
+  const showSemifinals = isPhasePastDeadline('super4'); // show semis when super 8 is done
+  const showFinals = nowEastern >= deadlines.finals;
 
   return (
-    <Container 
-      maxWidth="lg" 
+    <Container
+      maxWidth="lg"
       disableGutters
-      sx={{ 
-        py: { xs: 2, sm: 4 }, 
+      sx={{
+        py: { xs: 2, sm: 4 },
         px: { xs: 0.5, sm: 3 },
         width: '100%',
         maxWidth: { xs: '100vw', sm: '900px' },
@@ -695,14 +711,26 @@ const Fixtures = () => {
         Fixtures
       </Typography>
 
-      {/* Finals Section - only show if finals fixture exists and both teams are set */}
+      {/* Finals Section */}
       {showFinals && finalsFixtures.length > 0 && finalsFixtures[0].team1 && finalsFixtures[0].team2 && (
         <Box sx={{ mb: 4 }}>
           <Typography variant="h5" gutterBottom>
-            {finalsPhase?.name || 'Finals'}
+            {finalsPhase?.name || 'Final'}
           </Typography>
           {finalsFixtures.map((fixture, index) => (
             <FixtureAccordion key={`finals-${index}`} fixture={fixture} session={session} setSnackbar={setSnackbar} onUpdate={fetchData} />
+          ))}
+        </Box>
+      )}
+
+      {/* Semi-Finals Section */}
+      {showSemifinals && semifinalsFixtures.length > 0 && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h5" gutterBottom>
+            {semifinalsPhase?.name || 'Semi-Finals'}
+          </Typography>
+          {semifinalsFixtures.map((fixture, index) => (
+            <FixtureAccordion key={`semis-${index}`} fixture={fixture} session={session} setSnackbar={setSnackbar} onUpdate={fetchData} />
           ))}
         </Box>
       )}
