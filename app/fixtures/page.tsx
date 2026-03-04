@@ -620,29 +620,36 @@ const Fixtures = () => {
 
   const fetchData = async () => {
     try {
-      const [sheetsResponse, semisResponse] = await Promise.all([
-        fetch('/api/sheets', { cache: 'no-store' }),
-        fetch('/api/get-fixtures?phase=semifinals', { cache: 'no-store' }),
-      ]);
+      const sheetsResponse = await fetch('/api/sheets', { cache: 'no-store' });
       const result = await sheetsResponse.json();
       if (sheetsResponse.ok) {
         setGroupStageFixtures(transformDataForFixturesGroupStage(result.groupStage));
         setSuper4Fixtures(transformDataForFixtures(result.super4));
-        setFinalsFixtures(transformDataForFixtures(result.finals));
+
+        // Finals sheet contains both semifinals (53-54) and final (55)
+        // Split by match number using phase config ranges
+        if (result.finals && result.finals.length > 0) {
+          const header = result.finals[0];
+          const matchIndex = header.indexOf('Match');
+          const semisMatchRange = semifinalsPhase?.matchRange;
+          const finalsMatchRange = finalsPhase?.matchRange;
+
+          const semisRows = result.finals.filter((row: any[], i: number) => {
+            if (i === 0) return false; // skip header
+            const matchNum = parseInt(row[matchIndex]);
+            return semisMatchRange && matchNum >= semisMatchRange.start && matchNum <= semisMatchRange.end;
+          });
+          const finalsRows = result.finals.filter((row: any[], i: number) => {
+            if (i === 0) return false; // skip header
+            const matchNum = parseInt(row[matchIndex]);
+            return finalsMatchRange && matchNum > (semisMatchRange?.end ?? 0);
+          });
+
+          setSemifinalsFixtures(transformDataForFixtures([header, ...semisRows]));
+          setFinalsFixtures(transformDataForFixtures([header, ...finalsRows]));
+        }
       } else {
         setError(result.error || 'An error occurred while fetching data');
-      }
-      if (semisResponse.ok) {
-        const semisData = await semisResponse.json();
-        const fixtures: Fixture[] = (semisData.fixtures || []).map((f: any) => ({
-          date: f.date,
-          match: String(f.match),
-          team1: f.team1,
-          team2: f.team2,
-          winner: '',
-          picks: {},
-        }));
-        setSemifinalsFixtures(fixtures);
       }
     } catch (err) {
       if (err instanceof Error) {
