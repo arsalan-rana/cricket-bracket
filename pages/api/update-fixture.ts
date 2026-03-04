@@ -50,12 +50,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } else if (matchNumber >= 41 && matchNumber <= 52) {
     bracketType = 'super4';
     sheetName = 'Super 8';
-  } else if (matchNumber >= 53 && matchNumber <= 54) {
+  } else if (matchNumber >= 53 && matchNumber <= 55) {
     bracketType = 'finals';
-    sheetName = 'Semi-Finals';
-  } else if (matchNumber === 55) {
-    bracketType = 'finals';
-    sheetName = 'Final';
+    sheetName = 'Finals';
   } else {
     return res.status(400).json({ error: `Match number ${matchNumber} is out of valid range (1-55)` });
   }
@@ -69,12 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   } else if (bracketType === 'super4') {
     offset = 40; // Super 8: match 41 should be in row 1 (after header)
   } else if (bracketType === 'finals') {
-    // Semi-Finals & Final: match 53 should be in row 1, match 54 in row 2, match 55 in row 1 of Final sheet
-    if (sheetName === 'Semi-Finals') {
-      offset = 52; // match 53 -> row 1, match 54 -> row 2
-    } else if (sheetName === 'Final') {
-      offset = 54; // match 55 -> row 1
-    }
+    offset = 52; // Finals sheet: match 53 -> row 1, match 54 -> row 2, match 55 -> row 3
   }
 
   try {

@@ -299,7 +299,11 @@ const Leaderboard = () => {
                                   </Typography>
                                   <Divider sx={{ my: 1 }} />
                                   <Typography variant="body2">
-                                    Playoffs: {player.playoffPoints}
+                                    Super 8: {player.super8Points}
+                                  </Typography>
+                                  <Divider sx={{ my: 1 }} />
+                                  <Typography variant="body2">
+                                    Semi/Finals: {player.playoffPoints}
                                   </Typography>
                                   <Divider sx={{ my: 1 }} />
                                   <Typography variant="body2">
