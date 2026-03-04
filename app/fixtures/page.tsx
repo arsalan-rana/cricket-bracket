@@ -461,7 +461,7 @@ const transformData = (data: any[][] | undefined): Fixture[] => {
 };
 
 // Function for fixtures page - shows ALL completed fixtures + next upcoming one
-const transformDataForFixtures = (data: any[][] | undefined): Fixture[] => {
+const transformDataForFixtures = (data: any[][] | undefined, showAll = false): Fixture[] => {
   if (!data || data.length === 0) return [];
   const header = data[0];
   const fixtures: Fixture[] = [];
@@ -495,6 +495,11 @@ const transformDataForFixtures = (data: any[][] | undefined): Fixture[] => {
       }
     }
     fixtures.push(fixture);
+  }
+
+  // For small phases (semis/finals), show all fixtures with picks
+  if (showAll) {
+    return fixtures.reverse();
   }
 
   // For fixtures page: show ALL completed + ONLY the next upcoming (if any)
@@ -645,7 +650,7 @@ const Fixtures = () => {
             return finalsMatchRange && matchNum > (semisMatchRange?.end ?? 0);
           });
 
-          setSemifinalsFixtures(transformDataForFixtures([header, ...semisRows]));
+          setSemifinalsFixtures(transformDataForFixtures([header, ...semisRows], true));
           setFinalsFixtures(transformDataForFixtures([header, ...finalsRows]));
         }
       } else {
