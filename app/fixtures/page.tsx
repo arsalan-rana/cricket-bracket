@@ -463,30 +463,35 @@ const transformData = (data: any[][] | undefined): Fixture[] => {
 // Transform Finals sheet data (no Date/Match/Team columns - just player names as headers, rows = matches by position)
 const transformFinalsSheetData = (data: any[][] | undefined, phase: 'semifinals' | 'finals'): Fixture[] => {
   if (!data || data.length === 0) return [];
+  const cfg = getConfig();
   const header = data[0]; // Player names
-  const offset = config.phases.find(p => p.id === 'finals')?.matchRange?.start ?? 53;
-  const targetPhase = phase;
+  const offset = cfg.phases.find((p: any) => p.id === 'finals')?.matchRange?.start ?? 53;
   const fixtures: Fixture[] = [];
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     const matchNum = (offset - 1) + i; // row 1 = match 53, row 2 = match 54, etc.
-    const configFixture = config.fixtures.find(f => f.match === matchNum);
-    if (!configFixture || configFixture.phase !== targetPhase) continue;
+    const cfgFixture = cfg.fixtures.find((f: any) => f.match === matchNum);
+    if (!cfgFixture || cfgFixture.phase !== phase) continue;
 
+    const dateIdx = header.indexOf('Date');
+    const team1Idx = header.indexOf('Team 1');
+    const team2Idx = header.indexOf('Team 2');
+    const winnerIdx = header.indexOf('Winner');
     const fixture: Fixture = {
-      date: configFixture.date,
-      match: String(configFixture.match),
-      team1: configFixture.team1,
-      team2: configFixture.team2,
-      winner: '',
+      date: (dateIdx !== -1 && row[dateIdx]) || cfgFixture.date,
+      match: String(cfgFixture.match),
+      team1: (team1Idx !== -1 && row[team1Idx]) || cfgFixture.team1,
+      team2: (team2Idx !== -1 && row[team2Idx]) || cfgFixture.team2,
+      winner: (winnerIdx !== -1 && row[winnerIdx]) || '',
       picks: {},
     };
 
-    // Each column is a player name, each cell is their pick
+    // Each column is a player name, each cell is their pick (skip system columns)
+    const systemCols = ['Date', 'Match', 'Team 1', 'Team 2', 'Winner', 'POTM'];
     for (let j = 0; j < header.length; j++) {
       const playerName = header[j];
-      if (playerName && row[j]) {
+      if (playerName && row[j] && !systemCols.includes(playerName)) {
         fixture.picks[playerName] = row[j];
       }
     }
