@@ -460,8 +460,45 @@ const transformData = (data: any[][] | undefined): Fixture[] => {
   return fixtures.slice(0, fixturesToShow).reverse();
 };
 
+// Transform Finals sheet data (no Date/Match/Team columns - just player names as headers, rows = matches by position)
+const transformFinalsSheetData = (data: any[][] | undefined, phase: 'semifinals' | 'finals'): Fixture[] => {
+  if (!data || data.length === 0) return [];
+  const header = data[0]; // Player names
+  const offset = config.phases.find(p => p.id === 'finals')?.matchRange?.start ?? 53;
+  const targetPhase = phase;
+  const fixtures: Fixture[] = [];
+
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    const matchNum = (offset - 1) + i; // row 1 = match 53, row 2 = match 54, etc.
+    const configFixture = config.fixtures.find(f => f.match === matchNum);
+    if (!configFixture || configFixture.phase !== targetPhase) continue;
+
+    const fixture: Fixture = {
+      date: configFixture.date,
+      match: String(configFixture.match),
+      team1: configFixture.team1,
+      team2: configFixture.team2,
+      winner: '',
+      picks: {},
+    };
+
+    // Each column is a player name, each cell is their pick
+    for (let j = 0; j < header.length; j++) {
+      const playerName = header[j];
+      if (playerName && row[j]) {
+        fixture.picks[playerName] = row[j];
+      }
+    }
+
+    fixtures.push(fixture);
+  }
+
+  return fixtures.reverse();
+};
+
 // Function for fixtures page - shows ALL completed fixtures + next upcoming one
-const transformDataForFixtures = (data: any[][] | undefined, showAll = false): Fixture[] => {
+const transformDataForFixtures = (data: any[][] | undefined): Fixture[] => {
   if (!data || data.length === 0) return [];
   const header = data[0];
   const fixtures: Fixture[] = [];
@@ -495,11 +532,6 @@ const transformDataForFixtures = (data: any[][] | undefined, showAll = false): F
       }
     }
     fixtures.push(fixture);
-  }
-
-  // For small phases (semis/finals), show all fixtures with picks
-  if (showAll) {
-    return fixtures.reverse();
   }
 
   // For fixtures page: show ALL completed + ONLY the next upcoming (if any)
@@ -631,28 +663,9 @@ const Fixtures = () => {
         setGroupStageFixtures(transformDataForFixturesGroupStage(result.groupStage));
         setSuper4Fixtures(transformDataForFixtures(result.super4));
 
-        // Finals sheet contains both semifinals (53-54) and final (55)
-        // Split by match number using phase config ranges
-        if (result.finals && result.finals.length > 0) {
-          const header = result.finals[0];
-          const matchIndex = header.indexOf('Match');
-          const semisMatchRange = semifinalsPhase?.matchRange;
-          const finalsMatchRange = finalsPhase?.matchRange;
-
-          const semisRows = result.finals.filter((row: any[], i: number) => {
-            if (i === 0) return false; // skip header
-            const matchNum = parseInt(row[matchIndex]);
-            return semisMatchRange && matchNum >= semisMatchRange.start && matchNum <= semisMatchRange.end;
-          });
-          const finalsRows = result.finals.filter((row: any[], i: number) => {
-            if (i === 0) return false; // skip header
-            const matchNum = parseInt(row[matchIndex]);
-            return finalsMatchRange && matchNum > (semisMatchRange?.end ?? 0);
-          });
-
-          setSemifinalsFixtures(transformDataForFixtures([header, ...semisRows], true));
-          setFinalsFixtures(transformDataForFixtures([header, ...finalsRows]));
-        }
+        // Finals sheet has player names as headers, rows map to matches by position
+        setSemifinalsFixtures(transformFinalsSheetData(result.finals, 'semifinals'));
+        setFinalsFixtures(transformFinalsSheetData(result.finals, 'finals'));
       } else {
         setError(result.error || 'An error occurred while fetching data');
       }
