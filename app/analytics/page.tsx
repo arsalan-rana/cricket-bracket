@@ -15,6 +15,22 @@ import {
 import { teamFlags, getConfig } from '@/lib/useTournament';
 import { SYSTEM_COLUMNS } from '@/lib/sheets';
 
+// ─── LEADERBOARD TYPE ───────────────────────────────────────────────────────
+
+interface LeaderboardPlayer {
+  rank: string;
+  previousRank: string;
+  name: string;
+  groupPoints: number;
+  super8Points: number;
+  playoffPoints: number;
+  bonusPoints: number;
+  totalPoints: number;
+  penalty: number;
+  timestamp: string;
+  chipsUsed: string;
+}
+
 // ─── TYPES ──────────────────────────────────────────────────────────────────
 
 interface Match {
@@ -1003,6 +1019,252 @@ function MomentsTab({ data }: { data: AnalyticsData }) {
   );
 }
 
+// ─── POINTS JOURNEY TAB ─────────────────────────────────────────────────────
+
+function JourneyTab({ leaderboard }: { leaderboard: LeaderboardPlayer[] }) {
+  if (leaderboard.length === 0) {
+    return (
+      <Card>
+        <SectionTitle>📈 Points Journey</SectionTitle>
+        <div style={{ fontSize: 13, color: '#6a6a6a', fontStyle: 'italic' }}>Leaderboard data not available yet.</div>
+      </Card>
+    );
+  }
+
+  const sorted = [...leaderboard].sort((a, b) => b.totalPoints - a.totalPoints);
+  const maxTotal = sorted[0]?.totalPoints || 1;
+
+  // Compute phase-by-phase cumulative scores for each player
+  const journeys = sorted.map(p => ({
+    ...p,
+    afterGroups: p.groupPoints - p.penalty,
+    afterSuper8: p.groupPoints + p.super8Points - p.penalty,
+    afterPlayoffs: p.groupPoints + p.super8Points + p.playoffPoints - p.penalty,
+    final: p.totalPoints,
+  }));
+
+  // Find narratives
+  const bestGrouper = [...journeys].sort((a, b) => b.groupPoints - a.groupPoints)[0];
+  const bestSuper8 = [...journeys].sort((a, b) => b.super8Points - a.super8Points)[0];
+  const bestPlayoffs = [...journeys].sort((a, b) => b.playoffPoints - a.playoffPoints)[0];
+  const bestBonus = [...journeys].sort((a, b) => b.bonusPoints - a.bonusPoints)[0];
+
+  // Rank after each phase
+  const rankAfterGroups = [...journeys].sort((a, b) => b.afterGroups - a.afterGroups);
+  const rankAfterSuper8 = [...journeys].sort((a, b) => b.afterSuper8 - a.afterSuper8);
+
+  // Comebacks: improved rank significantly from groups to final
+  const comebacks = journeys.map(p => {
+    const groupRank = rankAfterGroups.findIndex(x => x.name === p.name) + 1;
+    const finalRank = parseInt(p.rank) || journeys.findIndex(x => x.name === p.name) + 1;
+    return { ...p, groupRank, finalRank, improvement: groupRank - finalRank };
+  }).sort((a, b) => b.improvement - a.improvement);
+
+  const biggestComeback = comebacks[0];
+  const biggestFall = comebacks[comebacks.length - 1];
+
+  // Phase colors
+  const phaseColors = {
+    groups: '#52b788',
+    super8: '#d4a843',
+    playoffs: '#c05050',
+    bonus: '#8a7aaa',
+  };
+
+  return (
+    <div>
+      {/* Phase MVPs */}
+      <Card>
+        <SectionTitle>🏅 Phase Dominators</SectionTitle>
+        <div style={{ fontSize: 11, color: '#5a7a5a', marginBottom: 14 }}>Who earned the most in each phase</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+          {[
+            { phase: 'Group Stage', emoji: '🏏', player: bestGrouper, pts: bestGrouper.groupPoints, color: phaseColors.groups },
+            { phase: 'Super 8', emoji: '🟡', player: bestSuper8, pts: bestSuper8.super8Points, color: phaseColors.super8 },
+            { phase: 'Semi/Finals', emoji: '🔥', player: bestPlayoffs, pts: bestPlayoffs.playoffPoints, color: phaseColors.playoffs },
+            { phase: 'Bonus', emoji: '🎯', player: bestBonus, pts: bestBonus.bonusPoints, color: phaseColors.bonus },
+          ].map(item => (
+            <div key={item.phase} style={{
+              background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 12, padding: '14px', textAlign: 'center',
+            }}>
+              <div style={{ fontSize: 24, marginBottom: 4 }}>{item.emoji}</div>
+              <div style={{ fontSize: 10, color: '#5a5a5a', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>{item.phase}</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: '#e8dcc8', marginBottom: 2 }}>{item.player.name}</div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: item.color }}>{item.pts}</div>
+              <div style={{ fontSize: 10, color: '#5a5a5a' }}>points</div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Comeback / Collapse */}
+      {biggestComeback && biggestFall && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14, marginBottom: 16 }}>
+          <Card style={{ borderColor: 'rgba(82,183,136,0.3)', background: 'rgba(82,183,136,0.04)' }}>
+            <SectionTitle color="#52b788">📈 Biggest Comeback</SectionTitle>
+            <div style={{ textAlign: 'center', padding: '10px 0' }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#e8dcc8', marginBottom: 6 }}>{biggestComeback.name}</div>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, color: '#5a5a5a', letterSpacing: 1 }}>AFTER GROUPS</div>
+                  <div style={{ fontSize: 24, fontWeight: 900, color: '#c05050' }}>#{biggestComeback.groupRank}</div>
+                </div>
+                <div style={{ fontSize: 20, color: '#52b788' }}>→</div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, color: '#5a5a5a', letterSpacing: 1 }}>FINAL</div>
+                  <div style={{ fontSize: 24, fontWeight: 900, color: '#52b788' }}>#{biggestComeback.finalRank}</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 12, color: '#52b788', marginTop: 8, fontWeight: 700 }}>
+                +{biggestComeback.improvement} places gained
+              </div>
+            </div>
+          </Card>
+          <Card style={{ borderColor: 'rgba(192,80,80,0.3)', background: 'rgba(192,80,80,0.04)' }}>
+            <SectionTitle color="#c05050">📉 Biggest Fall</SectionTitle>
+            <div style={{ textAlign: 'center', padding: '10px 0' }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#e8dcc8', marginBottom: 6 }}>{biggestFall.name}</div>
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12 }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, color: '#5a5a5a', letterSpacing: 1 }}>AFTER GROUPS</div>
+                  <div style={{ fontSize: 24, fontWeight: 900, color: '#52b788' }}>#{biggestFall.groupRank}</div>
+                </div>
+                <div style={{ fontSize: 20, color: '#c05050' }}>→</div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, color: '#5a5a5a', letterSpacing: 1 }}>FINAL</div>
+                  <div style={{ fontSize: 24, fontWeight: 900, color: '#c05050' }}>#{biggestFall.finalRank}</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 12, color: '#c05050', marginTop: 8, fontWeight: 700 }}>
+                {biggestFall.improvement} places dropped
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Full Points Breakdown Table */}
+      <Card>
+        <SectionTitle>📊 Points Breakdown by Phase</SectionTitle>
+        <div style={{ fontSize: 11, color: '#5a7a5a', marginBottom: 14 }}>How everyone earned their points — phase by phase</div>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid rgba(212,168,67,0.3)' }}>
+                {['#', 'Player', 'Groups', 'Super 8', 'Semi/Finals', 'Bonus', 'Penalty', 'Total'].map(h => (
+                  <th key={h} style={{ padding: '7px 8px', color: '#d4a843', fontSize: 9, letterSpacing: 1, textAlign: h === 'Player' ? 'left' : 'center', whiteSpace: 'nowrap' }}>
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((p, i) => (
+                <tr key={p.name} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <td style={{ padding: '8px', color: '#5a5a5a', fontWeight: 700, textAlign: 'center' }}>{i + 1}</td>
+                  <td style={{ padding: '8px', color: '#e8dcc8', whiteSpace: 'nowrap' }}>{p.name}</td>
+                  <td style={{ padding: '8px', color: phaseColors.groups, fontWeight: 700, textAlign: 'center' }}>{p.groupPoints}</td>
+                  <td style={{ padding: '8px', color: phaseColors.super8, fontWeight: 700, textAlign: 'center' }}>{p.super8Points}</td>
+                  <td style={{ padding: '8px', color: phaseColors.playoffs, fontWeight: 700, textAlign: 'center' }}>{p.playoffPoints}</td>
+                  <td style={{ padding: '8px', color: phaseColors.bonus, fontWeight: 700, textAlign: 'center' }}>{p.bonusPoints}</td>
+                  <td style={{ padding: '8px', color: p.penalty > 0 ? '#c05050' : '#3a3a3a', textAlign: 'center' }}>{p.penalty > 0 ? `-${p.penalty}` : '—'}</td>
+                  <td style={{ padding: '8px', color: '#d4a843', fontWeight: 900, textAlign: 'center' }}>{p.totalPoints}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+
+      {/* Stacked Bar Visual */}
+      <Card>
+        <SectionTitle>📈 Points Stacking</SectionTitle>
+        <div style={{ fontSize: 11, color: '#5a7a5a', marginBottom: 14 }}>Visual breakdown — see where each player&apos;s points came from</div>
+        {sorted.map(p => {
+          const total = p.totalPoints || 1;
+          return (
+            <div key={p.name} style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 12, color: '#e8dcc8' }}>{p.name}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#d4a843' }}>{p.totalPoints}</span>
+              </div>
+              <div style={{ display: 'flex', height: 14, borderRadius: 4, overflow: 'hidden', background: 'rgba(255,255,255,0.05)' }}>
+                {p.groupPoints > 0 && (
+                  <div
+                    style={{ width: `${(p.groupPoints / maxTotal) * 100}%`, background: phaseColors.groups, transition: 'width 0.5s ease' }}
+                    title={`Groups: ${p.groupPoints}`}
+                  />
+                )}
+                {p.super8Points > 0 && (
+                  <div
+                    style={{ width: `${(p.super8Points / maxTotal) * 100}%`, background: phaseColors.super8, transition: 'width 0.5s ease' }}
+                    title={`Super 8: ${p.super8Points}`}
+                  />
+                )}
+                {p.playoffPoints > 0 && (
+                  <div
+                    style={{ width: `${(p.playoffPoints / maxTotal) * 100}%`, background: phaseColors.playoffs, transition: 'width 0.5s ease' }}
+                    title={`Playoffs: ${p.playoffPoints}`}
+                  />
+                )}
+                {p.bonusPoints > 0 && (
+                  <div
+                    style={{ width: `${(p.bonusPoints / maxTotal) * 100}%`, background: phaseColors.bonus, transition: 'width 0.5s ease' }}
+                    title={`Bonus: ${p.bonusPoints}`}
+                  />
+                )}
+              </div>
+            </div>
+          );
+        })}
+        <div style={{ display: 'flex', gap: 16, marginTop: 14, flexWrap: 'wrap' }}>
+          {[
+            { label: 'Groups', color: phaseColors.groups },
+            { label: 'Super 8', color: phaseColors.super8 },
+            { label: 'Semi/Finals', color: phaseColors.playoffs },
+            { label: 'Bonus', color: phaseColors.bonus },
+          ].map(l => (
+            <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 10, height: 10, borderRadius: 2, background: l.color }} />
+              <span style={{ fontSize: 10, color: '#6a6a6a' }}>{l.label}</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Rank Movement */}
+      <Card>
+        <SectionTitle>🔄 Rank Movement: Groups → Final</SectionTitle>
+        <div style={{ fontSize: 11, color: '#5a7a5a', marginBottom: 14 }}>How positions shifted through the tournament</div>
+        {comebacks.map(p => {
+          const improved = p.improvement > 0;
+          const same = p.improvement === 0;
+          return (
+            <div key={p.name} style={{
+              display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, padding: '8px 12px',
+              background: improved ? 'rgba(82,183,136,0.05)' : same ? 'rgba(255,255,255,0.02)' : 'rgba(192,80,80,0.05)',
+              borderRadius: 8, border: `1px solid ${improved ? 'rgba(82,183,136,0.15)' : same ? 'rgba(255,255,255,0.06)' : 'rgba(192,80,80,0.15)'}`,
+            }}>
+              <span style={{ fontSize: 13, color: '#e8dcc8', flex: 1 }}>{p.name}</span>
+              <span style={{ fontSize: 12, color: '#7a7a7a', minWidth: 30, textAlign: 'center' }}>#{p.groupRank}</span>
+              <span style={{ fontSize: 14, color: improved ? '#52b788' : same ? '#5a5a5a' : '#c05050' }}>
+                {improved ? '↑' : same ? '→' : '↓'}
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 700, color: improved ? '#52b788' : same ? '#7a7a7a' : '#c05050', minWidth: 30, textAlign: 'center' }}>
+                #{p.finalRank}
+              </span>
+              <span style={{ fontSize: 11, color: improved ? '#52b788' : same ? '#5a5a5a' : '#c05050', minWidth: 40, textAlign: 'right', fontWeight: 700 }}>
+                {improved ? `+${p.improvement}` : same ? '—' : p.improvement}
+              </span>
+            </div>
+          );
+        })}
+      </Card>
+    </div>
+  );
+}
+
 // ─── MAIN PAGE ──────────────────────────────────────────────────────────────
 
 export default function AnalyticsPage() {
@@ -1010,6 +1272,7 @@ export default function AnalyticsPage() {
   const [tab, setTab] = useState(0);
   const [allMatches, setAllMatches] = useState<Match[]>([]);
   const [players, setPlayers] = useState<string[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -1018,28 +1281,26 @@ export default function AnalyticsPage() {
 
     const fetchData = async () => {
       try {
-        const res = await fetch('/api/sheets', { cache: 'no-store' });
+        const [res, lbRes] = await Promise.all([
+          fetch('/api/sheets', { cache: 'no-store' }),
+          fetch('/api/leaderboard-snapshot', { cache: 'no-store' }),
+        ]);
         if (!res.ok) {
           setError('Failed to fetch data');
           return;
         }
         const result = await res.json();
 
-        // Debug: log raw sheet data headers
-        console.log('[Analytics] groupStage rows:', result.groupStage?.length, 'header:', result.groupStage?.[0]);
-        console.log('[Analytics] super4 rows:', result.super4?.length, 'header:', result.super4?.[0]);
-        console.log('[Analytics] finals rows:', result.finals?.length, 'header:', result.finals?.[0]);
-        // Debug: log a sample data row
-        if (result.groupStage?.[1]) console.log('[Analytics] groupStage row 1:', result.groupStage[1]);
-        if (result.super4?.[1]) console.log('[Analytics] super4 row 1:', result.super4[1]);
-        if (result.finals?.[1]) console.log('[Analytics] finals row 1:', result.finals[1]);
+        // Fetch leaderboard data
+        if (lbRes.ok) {
+          const lbData = await lbRes.json();
+          setLeaderboard(lbData.players || []);
+        }
 
         // Transform all phases
         const groupMatches = transformSheetToMatches(result.groupStage);
         const super4Matches = transformSheetToMatches(result.super4);
         const finalsMatches = transformFinalsSheetToMatches(result.finals);
-
-        console.log('[Analytics] groupMatches:', groupMatches.length, 'super4Matches:', super4Matches.length, 'finalsMatches:', finalsMatches.length);
 
         const combined = [...groupMatches, ...super4Matches, ...finalsMatches];
         // Sort by match id
@@ -1163,6 +1424,7 @@ export default function AnalyticsPage() {
           <Tab label="💥 Upsets" />
           <Tab label="🧠 Players" />
           <Tab label="🎭 Moments" />
+          <Tab label="📈 Journey" />
         </Tabs>
       </Box>
 
@@ -1171,6 +1433,7 @@ export default function AnalyticsPage() {
         {tab === 1 && <UpsetsTab data={analyticsData} />}
         {tab === 2 && <PlayersTab data={analyticsData} />}
         {tab === 3 && <MomentsTab data={analyticsData} />}
+        {tab === 4 && <JourneyTab leaderboard={leaderboard} />}
       </div>
     </div>
   );
