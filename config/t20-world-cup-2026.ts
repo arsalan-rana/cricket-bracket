@@ -166,7 +166,7 @@ export const t20WorldCup2026Config: TournamentConfig = {
     { match: 54, date: '5 March', team1: 'India', team2: 'England', venue: 'Wankhede, Mumbai', aiPrediction: 'India', phase: 'semifinals' },
 
     // Final
-    { match: 55, date: '8 March', team1: 'TBA', team2: 'TBA', venue: 'TBA', phase: 'finals' },
+    { match: 55, date: '8 March', team1: 'New Zealand', team2: 'India', venue: 'Narendra Modi Stadium, Mumbai', aiPrediction: 'India', phase: 'finals' },
   ],
 
   bonusQuestions: [

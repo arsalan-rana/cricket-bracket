@@ -723,7 +723,7 @@ const Fixtures = () => {
   const nowEastern = getNow();
   const deadlines = getAllDeadlines();
   const showSemifinals = isPhasePastDeadline('super4'); // show semis when super 8 is done
-  const showFinals = nowEastern >= deadlines.finals;
+  const showFinals = isPhasePastDeadline('semifinals');
 
   return (
     <Container

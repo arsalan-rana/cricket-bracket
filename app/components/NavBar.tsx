@@ -42,6 +42,7 @@ const NavBar: React.FC = () => {
     { href: '/bonus-picks', label: 'Bonus Picks', icon: '🎯' },
     { href: '/bonus-makeup', label: 'Bonus Makeup', icon: '📝' },
     { href: '/leaderboard', label: 'Leaderboard', icon: '🏆' },
+    { href: '/analytics', label: 'Analytics', icon: '🧠' },
     { href: '/rules', label: 'Rules', icon: '📋' },
   ];
 

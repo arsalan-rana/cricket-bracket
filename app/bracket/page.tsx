@@ -109,6 +109,9 @@ const BracketSubmission = () => {
   const [detailsOpen, setDetailsOpen] = useState<{ [match: number]: boolean }>({});
   const [bonusAnswers, setBonusAnswers] = useState<{ [key: string]: string }>({});
 
+  // India GIF easter egg state
+  const [showIndiaGif, setShowIndiaGif] = useState(false);
+
   // NEW: A flag that indicates whether the user has already submitted (finalized) their group stage bracket.
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
   const [showDeadlinePopup, setShowDeadlinePopup] = useState(false);
@@ -183,20 +186,22 @@ const BracketSubmission = () => {
   // Show tabs based on deadlines
   const showSuper4Tab = isGroupStagePastDeadline;
   const showSemifinalsTab = semifinalsPhase && isPlayoffsPastDeadline;
-  const showFinalsTab = isFinalsPastDeadline;
+  const showFinalsTab = isSemifinalsPastDeadline;
 
   // For group stage we only lock if the user already finalized their submission.
   const locked = isGroupStagePastDeadline && alreadySubmitted;
 
   // Set default tab based on current phase
   useEffect(() => {
-    if (showSemifinalsTab) {
+    if (showFinalsTab) {
+      setTabValue(showSemifinalsTab ? 4 : 3); // Switch to Finals tab
+    } else if (showSemifinalsTab) {
       setTabValue(3); // Switch to Semi-Finals tab when it becomes available
     } else if (showSuper4Tab && tabValue === 0) {
       setTabValue(2); // Switch to Super 8 tab when it becomes available
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showSuper4Tab, showSemifinalsTab]);
+  }, [showSuper4Tab, showSemifinalsTab, showFinalsTab]);
 
   // Fetch existing group stage bracket picks on mount
   useEffect(() => {
@@ -423,6 +428,11 @@ const BracketSubmission = () => {
 
   const handleFinalsSelection = (match: number, team: string) => {
     if (isFinalsPastDeadline) return;
+    // Easter egg: show GIF when picking India
+    if (team === 'India') {
+      setShowIndiaGif(true);
+      setTimeout(() => setShowIndiaGif(false), 4000);
+    }
     setFinalsPredictions((prev) => ({
       ...prev,
       [match]: team,
@@ -1223,6 +1233,50 @@ const BracketSubmission = () => {
             Apply Predictions
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* --- INDIA GIF EASTER EGG --- */}
+      <Dialog
+        open={showIndiaGif}
+        onClose={() => setShowIndiaGif(false)}
+        PaperProps={{
+          sx: {
+            background: 'transparent',
+            boxShadow: 'none',
+            overflow: 'visible',
+            maxWidth: 400,
+          }
+        }}
+        slotProps={{
+          backdrop: {
+            sx: { backgroundColor: 'rgba(0,0,0,0.85)' }
+          }
+        }}
+      >
+        <Box sx={{ textAlign: 'center', p: 2 }}>
+          <Box
+            component="img"
+            src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExZTVrN2tvZzk3aTE0eGI3dW91N253cXZkc3B5Z3J2bnN1MGN4aTBtYSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/XK607eARWuaHOHLQHT/giphy.gif"
+            alt="Disappointed"
+            sx={{
+              width: '100%',
+              maxWidth: 360,
+              borderRadius: 3,
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            }}
+          />
+          <Typography
+            variant="h5"
+            sx={{
+              mt: 2,
+              color: 'white',
+              fontWeight: 800,
+              textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+            }}
+          >
+            Bhai... really? 🇮🇳😭
+          </Typography>
+        </Box>
       </Dialog>
 
       {/* --- TABS FOR BRACKET SUBMISSION --- */}
@@ -2297,7 +2351,7 @@ const BracketSubmission = () => {
         {/* Spacer to prevent content from going under fixed progress bar */}
         {!isFinalsPastDeadline && finalsFixtures.length > 0 && <Box sx={{ height: 68 }} />}
 
-        {(!finalsFixtures[0].team1 || !finalsFixtures[0].team2) ? (
+        {(!finalsFixtures.length || !finalsFixtures[0].team1 || !finalsFixtures[0].team2) ? (
           <Typography variant="body1">Finals are not available yet.</Typography>
         ) : (
           finalsFixtures.map((fixture) => (
