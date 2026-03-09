@@ -20,13 +20,44 @@ const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const config = getConfig();
 const deadlineDT = getDeadline('group-stage');
 
-// Hardcoded bonus points mapping for Asia Cup 2025.
-// Update this with the actual participants and their bonus points.
-const hardcodedBonusPoints: { [player: string]: number } = {
-  // Add Asia Cup 2025 participants here
-  // Example:
-  // "Player Name": 10,
-};
+/**
+ * Read bonus points from the Bonuses Overview sheet.
+ * Expects player names in the header row and a row with "Total" in column A
+ * containing each player's bonus total in their respective column.
+ */
+function readBonusPoints(bonusesData: any[][]): { [player: string]: number } {
+  const bonusPoints: { [player: string]: number } = {};
+  if (!bonusesData || bonusesData.length < 2) return bonusPoints;
+
+  const header = bonusesData[0];
+
+  // Find the last row that starts with "Total" (case-insensitive)
+  let totalRow: any[] | null = null;
+  for (let i = bonusesData.length - 1; i >= 1; i--) {
+    if (bonusesData[i][0] && bonusesData[i][0].toString().trim().toLowerCase() === 'total') {
+      totalRow = bonusesData[i];
+      break;
+    }
+  }
+
+  if (!totalRow) {
+    console.warn('[Leaderboard] No "Total" row found in Bonuses Overview sheet');
+    return bonusPoints;
+  }
+
+  for (let j = 1; j < header.length; j++) {
+    const playerName = header[j];
+    if (playerName && totalRow[j]) {
+      const points = parseInt(totalRow[j], 10);
+      if (!isNaN(points)) {
+        bonusPoints[playerName] = points;
+      }
+    }
+  }
+
+  console.log('[Leaderboard] Bonus points from sheet:', JSON.stringify(bonusPoints));
+  return bonusPoints;
+}
 
 /**
  * Leaderboard evaluation function.
@@ -246,9 +277,10 @@ function calculateLeaderboard(
     console.error("Links data is empty or invalid");
   }
 
-  // Now, for each player already in our players object, lookup bonus points from the hardcoded map.
+  // Read bonus points from the Bonuses Overview sheet "Total" row.
+  const bonusPointsMap = readBonusPoints(bonusesData);
   Object.keys(players).forEach((playerName) => {
-    const bonus = hardcodedBonusPoints[playerName] || 0;
+    const bonus = bonusPointsMap[playerName] || 0;
     players[playerName].bonusPoints = bonus;
     players[playerName].totalPoints += bonus;
   });
@@ -321,7 +353,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const super4Data = super4Res.data.values || [];
     const playoffsData = playoffsRes.data.values || [];
     const finalsData = finalsRes.data.values || [];
-    const bonusesData: any[] = []; // Explicitly typed as any[]
+    const bonusesData = bonusesRes.data.values || [];
     const linksData = linksRes.data.values || [];
     const chipsRows = chipsRes.data.values || [];
 
@@ -428,15 +460,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ['Rank', 'Previous Rank', 'Player', 'Group Points', 'Super4 Points', 'Playoffs Points', 'Bonus Points', 'Total Points', 'Penalty', 'Timestamp', 'Chips Used'],
       ...Object.entries(players)
         .map(([name, { groupPoints, super4Points, playoffPoints, bonusPoints, totalPoints, timestamp, penalty }]) => {
-          // Look up bonus points from our hardcoded mapping (defaulting to 0)
-          const bonus = hardcodedBonusPoints[name] || 0;
           return {
             name,
             groupPoints,
             super4Points,
             playoffPoints,
-            bonusPoints: bonus,
-            totalPoints: totalPoints, // totalPoints already had bonus added in calculateLeaderboard, if applicable
+            bonusPoints,
+            totalPoints,
             penalty,
             timestamp,
           };
